@@ -1,0 +1,17 @@
+{
+  "dimensions": 2,
+  "labels": [
+    "x",
+    "y"
+  ],
+  "data": [
+    {
+      "name": "Record 0",
+      "values": [14.5, 47]
+    },
+    {
+      "name": "Record 1",
+      "values": [15, 24]
+    }
+	]
+}
