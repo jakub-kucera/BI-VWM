@@ -14,10 +14,10 @@ WORKING_DIRECTORY = "../saved_data/"  # change ../
 
 # maybe rename to Index, use rtree only as module name
 class RTree:
-    def __init__(self, tree_file_):  # list all possible parameters / use **kwargs
+    def __init__(self):  # list all possible parameters / use **kwargs
 
         # path to binary file with saved tree / already opened file object
-        self.tree_file
+        self.tree_file = DEFAULT_TREE_FILE_PATH
 
         self.dimensions = 2
 
