@@ -3,14 +3,8 @@ from typing import List
 from rtree.database import Database
 from rtree.database_entry import DatabaseEntry
 from rtree.node import Node
+from rtree.default_config import *
 import pickle
-
-DEFAULT_DIMENSIONS = 2  # maybe moved global constants to separate file
-DEFAULT_NODE_SIZE = 4 * 1024
-DEFAULT_TREE_FILE_PATH = "rtree.bin"
-# add more
-
-WORKING_DIRECTORY = "../saved_data/"  # change ../
 
 # maybe rename to Index, use rtree only as module name
 class RTree:

@@ -2,31 +2,28 @@ import os
 from typing import Optional
 
 from rtree.node import Node
-
-DEFAULT_DIMENSIONS = 2
-DEFAULT_NODE_SIZE = 1024
-DEFAULT_TREE_FILE_NAME = 'rtree.bin'
-
-NODE_ID_SIZE = 8  # todo move to separate file
-PARAMETER_RECORD_SIZE = 4
-NODE_FLAG_SIZE = 1
-TREE_BYTEORDER = 'little'
+from rtree.default_config import *
 
 
 class TreeFileHandler:  # todo move more stuff to RTree
     def __init__(self,  # no need to use positional arguments, is always called from RTree with all arguments
-                 filename: str = DEFAULT_TREE_FILE_NAME,
+                 filename: str = DEFAULT_TREE_FILE_PATH,
                  dimensions: int = DEFAULT_DIMENSIONS,
                  node_size: int = DEFAULT_NODE_SIZE):
         self.filename = filename
         self.dimensions = dimensions
         self.node_size = node_size
+
+        self.parameter_record_size = PARAMETER_RECORD_SIZE  # todo replace, add to header
+        self.node_id_size = NODE_ID_SIZE
+        self.null_node_id = NULL_NODE_ID
+
         self.children_per_node = int(
             (self.node_size - NODE_FLAG_SIZE - (self.dimensions * PARAMETER_RECORD_SIZE * 2)) / NODE_ID_SIZE)
 
         # since children_per_node is calculated from node_size, then there is probably a few bytes left
         self.node_padding = self.node_size - (NODE_FLAG_SIZE + (self.dimensions * PARAMETER_RECORD_SIZE * 2) + (
-                    self.children_per_node * NODE_ID_SIZE))
+                self.children_per_node * NODE_ID_SIZE))
         # if exists
         if os.path.isfile(self.filename):  # maybe move to RTree
             # todo load from file
@@ -36,12 +33,18 @@ class TreeFileHandler:  # todo move more stuff to RTree
             with open(self.filename, 'w+b') as f:
                 pass
         # file opened for reading by default. Reading from file is more common
-        self.file = open(self.filename, 'r+b')  # todo file check
+        try:
+            self.file = open(self.filename, 'r+b')  # todo file check
+        except IOError:
+            input("File cannot be opened")
+
+        # todo self.offset_size = write header
+
         # self.file_reading = True
         self.offset_size = 0
 
         # flag size + coordinates_rectangle size + array of children size
-        self.highest_id = -1  # when loading from existing file, calculate from file size
+        self.highest_id = NULL_NODE_ID  # when loading from existing file, calculate from file size
 
         # gets size of file
         self.file.seek(0, 2)
@@ -52,10 +55,31 @@ class TreeFileHandler:  # todo move more stuff to RTree
         self.current_position = self.offset_size
 
     def __del__(self):
+        # self.file.flush()
         self.file.close()
+        if DELETE_TREE_INDEX_FILE:
+            os.remove(self.filename)
 
     def __str__(self):
         return str(self.__dict__)
+
+    def read_header(self):
+        dimensions = self.dimensions  # 4B
+        node_size = self.node_size  # $B
+        highest_id = self.highest_id  # 8B
+        parameter_record_size = self.parameter_record_size  # 1B
+        node_id_size = self.node_id_size  # 1B
+        null_node_id = self.null_node_id  # 8B
+        pass
+
+    def write_header(self):
+        dimensions = self.dimensions  # 4B
+        node_size = self.node_size  # $B
+        highest_id = self.highest_id  # 8B
+        parameter_record_size = self.parameter_record_size  # 1B
+        node_id_size = self.node_id_size  # 1B
+        null_node_id = self.null_node_id  # 8B
+        pass
 
     def __get_node_address(self, node_id: int):
         self.current_position = self.offset_size + (node_id * self.node_size)
@@ -89,8 +113,10 @@ class TreeFileHandler:  # todo move more stuff to RTree
         child_nodes = []
         for _ in range(self.children_per_node):
             child_id = int.from_bytes(self.file.read(NODE_ID_SIZE), byteorder=TREE_BYTEORDER, signed=True)
-            if child_id != 0:  # todo change how to differentiate between null nodes, maybe use same 1st byte as is_leaf (7 unused bits)
+            if child_id != NULL_NODE_ID:
                 child_nodes.append(child_id)
+            # else:
+            #     break
 
         return Node(is_leaf, rectangle, child_nodes)
 
@@ -114,33 +140,29 @@ class TreeFileHandler:  # todo move more stuff to RTree
         pass
 
     def write_node(self, node: Node) -> int:
-        # close file opened for reading
-        self.file.close()
 
-        # opens file for writing
-        with open(self.filename, 'r+b') as writing_file:
-            # moves the file handle to the end of file
-            writing_file.seek(0, 2)
+        # moves the file handle to the end of file
+        self.file.seek(0, 2)
 
-            flag = int(node.is_leaf)
-            writing_file.write(flag.to_bytes(1, byteorder=TREE_BYTEORDER, signed=False))
+        flag = int(node.is_leaf)
+        self.file.write(flag.to_bytes(1, byteorder=TREE_BYTEORDER, signed=False))
 
-            for one_dimension in node.coordinates_rectangle:
-                for record in one_dimension:
-                    writing_file.write(record.to_bytes(PARAMETER_RECORD_SIZE, byteorder=TREE_BYTEORDER, signed=True))
+        for one_dimension in node.coordinates_rectangle:
+            for record in one_dimension:
+                self.file.write(record.to_bytes(PARAMETER_RECORD_SIZE, byteorder=TREE_BYTEORDER, signed=True))
 
-            for child in node.children:
-                writing_file.write(child.to_bytes(NODE_ID_SIZE, byteorder=TREE_BYTEORDER, signed=True))
+        # write child nodes
+        for child in node.children:
+            self.file.write(child.to_bytes(NODE_ID_SIZE, byteorder=TREE_BYTEORDER, signed=True))
 
-            for child in range(self.children_per_node - len(node.children)):
-                writing_file.write(int(0).to_bytes(NODE_ID_SIZE, byteorder=TREE_BYTEORDER, signed=True))
+        # write null child nodes
+        for child in range(self.children_per_node - len(node.children)):
+            self.file.write(int(NULL_NODE_ID).to_bytes(NODE_ID_SIZE, byteorder=TREE_BYTEORDER, signed=True))
 
-            # writes padding
-            writing_file.write(int(0).to_bytes(self.node_padding, byteorder=TREE_BYTEORDER, signed=False))
+        # writes padding
+        self.file.write(int(0).to_bytes(self.node_padding, byteorder=TREE_BYTEORDER, signed=False))
 
-            self.highest_id += 1
-            node_id = self.highest_id
+        self.highest_id += 1
+        node_id = self.highest_id
 
-        # opens file for reading again
-        self.file = open(self.filename, 'r+b')
         return node_id
