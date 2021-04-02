@@ -1,19 +1,19 @@
 from rtree import rtree, database_entry
-# from
+
 
 
 if __name__ == '__main__':
     print("hello, friend")
 
-
 """
 
-leaf_flag, N * [min, max], K * id
-leaf_flag, N * [min, max], K * byte address
+(leaf_flag), N * [min, max], K * id
+(leaf_flag), N * [min, max], K * byte address
 
-flag, N * [min, max], data
+flag, N * [min, max], (pickled) data
+"""
+#  K * byte address
+"""
+same cache for both, or 2 separate caches?
 
-K * byte address
-
-========================
 """
