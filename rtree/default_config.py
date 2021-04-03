@@ -12,4 +12,4 @@ DELETE_TREE_INDEX_FILE = False
 
 # Testing
 TREE_FILE_TEST = "testingTree.bin"
-PRINT_OUTPUT_TEST = True
+PRINT_OUTPUT_TEST = False
