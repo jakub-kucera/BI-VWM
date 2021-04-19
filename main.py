@@ -6,7 +6,11 @@ from rtree.tree_file_handler import TreeFileHandler
 
 if __name__ == '__main__':
     print("hello, friend")
-    # tree = rtree.RTree()
+
+    # dimensions, bytesize-of-dims,
+    #          2,       List[x, y],
+
+    tree = rtree.RTree()
 """
 
 (leaf_flag), N * [min, max], K * id
