@@ -1,161 +1,212 @@
 import os
-from unittest import TestCase
+import secrets
+from typing import Tuple
 
-from rtree.node import Node
+import pytest
+
+from rtree.node import Node, MBB, MBBDim
 from rtree.tree_file_handler import TreeFileHandler
 from rtree.default_config import *
 
+# testing_unique_sequence = b"\x00\xb0\x83\x82\x8c\x05\x7b\xc3\x38\x69\xff\xde\xed\xba\xd6\x02\x69\xd2\x80\x94"
+# testing_config_hash = b"\x4e\x9a\xe1\xf1\xe8\x91\xe9\x41\x95\x64\x29\x89\x88\x86\x53\xf1\x22\xa9\xde\xb9"
+testing_unique_sequence = secrets.token_bytes(UNIQUE_SEQUENCE_LENGTH)
+testing_config_hash = secrets.token_bytes(CONFIG_HASH_LENGTH)
 
-# def test_tree_file_handler_write(): # move to separate file
-#     os.remove(TREE_FILE_TEST)
-#     tree_file_handler = TreeFileHandler(TREE_FILE_TEST, 2, 1024)
-#     new_node1 = Node(False, [[1, 1], [2, 2]], [])
-#     print(new_node1)
-#     new_node2 = Node(True, [[5, 4], [3, 2]], [1, 2])
-#     print(new_node2)
-#     print(tree_file_handler)
-#     print(tree_file_handler.write_node(new_node1))
-#     print(tree_file_handler.write_node(new_node2))
-#     print(tree_file_handler)
-#
-# def test_tree_file_handler_read():  # move to separate file
-#     tree_file_handler = TreeFileHandler(TREE_FILE_TEST, 2, 1024)
-#     print(tree_file_handler)
-#     # tree_file_handler.write_node(new_node)
-#     i = 0
-#     while i < 2:
-#         node_from_file = tree_file_handler.get_node(i)
-#         i += 1
-#         print(tree_file_handler)
-#         print(node_from_file)
-#         if node_from_file is None:
-#             break
+Node.max_entries_count = 50
 
-class TestTreeFileHandler(TestCase):
-    def compare_tree_file_handler_dictionary(self, a, b):
-        return (a['filename'] == b['filename'] and
-                a['dimensions'] == b['dimensions'] and
-                a['node_size'] == b['node_size'] and
-                a['parameter_record_size'] == b['parameter_record_size'] and
-                a['node_id_size'] == b['node_id_size'] and
-                a['null_node_id'] == b['null_node_id'] and
-                a['node_flag_size'] == b['node_flag_size'] and
-                a['highest_id'] == b['highest_id'] and
-                a['children_per_node'] == b['children_per_node'] and
-                a['node_padding'] == b['node_padding'] and
-                a['filesize'] == b['filesize'])  # not current position
 
-    def test_write_read_node_one_handler_instance_default_args(self):
-        print("TEST test_write_read_node_one_handler_instance_default_args: ") if PRINT_OUTPUT_TEST else None
-        if os.path.isfile(TREE_FILE_TEST):
-            os.remove(TREE_FILE_TEST)
+def compare_tree_file_handler_dictionary(a_dict, b_dict):
+    return (a_dict['filename'] == b_dict['filename'] and
+            a_dict['dimensions'] == b_dict['dimensions'] and
+            a_dict['node_size'] == b_dict['node_size'] and
+            a_dict['parameter_size'] == b_dict['parameter_size'] and
+            a_dict['id_size'] == b_dict['id_size'] and
+            a_dict['null_node_id'] == b_dict['null_node_id'] and
+            a_dict['node_flag_size'] == b_dict['node_flag_size'] and
+            a_dict['highest_id'] == b_dict['highest_id'] and
+            a_dict['children_per_node'] == b_dict['children_per_node'] and
+            a_dict['node_padding'] == b_dict['node_padding'] and
+            a_dict['tree_depth'] == b_dict['tree_depth'] and
+            a_dict['unique_sequence'] == b_dict['unique_sequence'] and
+            a_dict['config_hash'] == b_dict['config_hash'] and
+            a_dict['filesize'] == b_dict['filesize'])  # not current position
 
-        tree_file_handler_writer = TreeFileHandler(TREE_FILE_TEST, 2, 1024)
-        written_node_1 = Node(False, [[1, 1], [2, 2]], [5, 5, 2, 2, 2])
-        written_node_2 = Node(True, [[5, 4], [3, 2]], [1, 2])
-        id1 = tree_file_handler_writer.insert_node(written_node_1)
-        id2 = tree_file_handler_writer.insert_node(written_node_2)
 
-        read_node1 = tree_file_handler_writer.get_node(id1)
-        read_node2 = tree_file_handler_writer.get_node(id2)
+@pytest.mark.parametrize('tree_file_handler_args, written_nodes', [
+    (
+            dict(filename=TREE_FILE_TEST, dimensions=2, node_size=1024),
+            (
+                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2], is_leaf=True),
+                    Node(mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+            )
+    ),
+    (
+            dict(filename=TREE_FILE_TEST),
+            (
+                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
+                    Node(mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+            )
+    ),
+    (
+            dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
+                 trunk_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
+            (
+                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
+                         is_leaf=False),
+                    Node(mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
+                         entry_ids=[1, 2], is_leaf=True)
+            )
+    ),
+])
+def test_write_read_node_one_handler(tree_file_handler_args, written_nodes):
+    if os.path.isfile(TREE_FILE_TEST):
+        os.remove(TREE_FILE_TEST)
 
-        print(written_node_1) if PRINT_OUTPUT_TEST else None
-        print(read_node1) if PRINT_OUTPUT_TEST else None
-        print(written_node_2) if PRINT_OUTPUT_TEST else None
-        print(read_node2) if PRINT_OUTPUT_TEST else None
+    tree_file_handler = TreeFileHandler(**tree_file_handler_args)
 
-        assert written_node_1.__dict__ == read_node1.__dict__
-        assert written_node_2.__dict__ == read_node2.__dict__
+    node_ids = []
+    for node in written_nodes:
+        new_id = tree_file_handler.insert_node(node)
+        node_ids += [new_id]
 
-    def test_write_read_node_two_handler_instances_default_args(self):
-        print("TEST test_write_read_node_two_handler_instances_default_args") if PRINT_OUTPUT_TEST else None
-        print("Writing: ") if PRINT_OUTPUT_TEST else None
-        if os.path.isfile(TREE_FILE_TEST):
-            os.remove(TREE_FILE_TEST)
+    read_nodes_lst = []
+    for node_id in node_ids:
+        read_node = tree_file_handler.get_node(node_id)
+        read_nodes_lst += [read_node]
 
-        tree_file_handler_writer = TreeFileHandler(TREE_FILE_TEST)
-        print(tree_file_handler_writer) if PRINT_OUTPUT_TEST else None
-        written_node_1 = Node(False, [[1, 1], [2, 2]], [])
-        written_node_2 = Node(True, [[5, 4], [3, 2]], [1, 2])
-        id1 = tree_file_handler_writer.insert_node(written_node_1)
-        id2 = tree_file_handler_writer.insert_node(written_node_2)
+    read_nodes = tuple(read_nodes_lst)
 
-        print(tree_file_handler_writer) if PRINT_OUTPUT_TEST else None
-        del tree_file_handler_writer
+    for written, read in zip(written_nodes, read_nodes):
+        assert written.__dict__ == read.__dict__
 
-        print("Reading: ") if PRINT_OUTPUT_TEST else None
-        tree_file_handler_reader = TreeFileHandler(TREE_FILE_TEST)
-        print(tree_file_handler_reader) if PRINT_OUTPUT_TEST else None
+    if os.path.isfile(TREE_FILE_TEST):
+        os.remove(TREE_FILE_TEST)
 
-        read_node1 = tree_file_handler_reader.get_node(id1)
-        read_node2 = tree_file_handler_reader.get_node(id2)
-        print(tree_file_handler_reader) if PRINT_OUTPUT_TEST else None
 
-        print(written_node_1) if PRINT_OUTPUT_TEST else None
-        print(read_node1) if PRINT_OUTPUT_TEST else None
-        print(written_node_2) if PRINT_OUTPUT_TEST else None
-        print(read_node2) if PRINT_OUTPUT_TEST else None
+@pytest.mark.parametrize('tree_file_handler_writer_args, written_nodes, tree_file_handler_reader_args', [
+    (
+            dict(filename=TREE_FILE_TEST),
+            (
+                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
+                    Node(mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+            ),
+            dict(filename=TREE_FILE_TEST)
+    ),
+    (
+            dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
+                 trunk_id=5, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
+            (
+                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
+                         is_leaf=False),
+                    Node(mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
+                         entry_ids=[1, 2], is_leaf=True)
+            ),
+            dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
+                 trunk_id=5, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash)
+    ),
+])
+def test_write_read_node_two_handler(tree_file_handler_writer_args,
+                                     written_nodes: Tuple[Node, ...],
+                                     tree_file_handler_reader_args):
+    if os.path.isfile(TREE_FILE_TEST):
+        os.remove(TREE_FILE_TEST)
 
-        assert written_node_1.__dict__ == read_node1.__dict__
-        assert written_node_2.__dict__ == read_node2.__dict__
+    tree_file_handler_writer = TreeFileHandler(**tree_file_handler_writer_args)
 
-    def test_write_read_node_one_handler_instance_not_default_args(self):
-        print("TEST test_write_read_node_one_handler_instance_not_default_args: ") if PRINT_OUTPUT_TEST else None
-        if os.path.isfile(TREE_FILE_TEST):
-            os.remove(TREE_FILE_TEST)
+    node_ids = []
+    for node in written_nodes:
+        new_id = tree_file_handler_writer.insert_node(node)
+        node_ids += [new_id]
 
-        tree_file_handler_writer = TreeFileHandler(TREE_FILE_TEST, 5, 4 * 1024)
-        written_node_1 = Node(False, [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]], [5, 5, 2, 2, 2])
-        written_node_2 = Node(True, [[9, 8], [7, 6], [5, 4], [3, 2], [1, 0]], [1, 2])
-        id1 = tree_file_handler_writer.insert_node(written_node_1)
-        id2 = tree_file_handler_writer.insert_node(written_node_2)
+    writer_dict = tree_file_handler_writer.__dict__
+    del tree_file_handler_writer
 
-        read_node1 = tree_file_handler_writer.get_node(id1)
-        read_node2 = tree_file_handler_writer.get_node(id2)
+    tree_file_handler_reader = TreeFileHandler(**tree_file_handler_reader_args)
 
-        print(written_node_1) if PRINT_OUTPUT_TEST else None
-        print(read_node1) if PRINT_OUTPUT_TEST else None
-        print(written_node_2) if PRINT_OUTPUT_TEST else None
-        print(read_node2) if PRINT_OUTPUT_TEST else None
+    read_nodes_lst = []
+    for node_id in node_ids:
+        read_node = tree_file_handler_reader.get_node(node_id)
+        read_nodes_lst += [read_node]
 
-        assert written_node_1.__dict__ == read_node1.__dict__
-        assert written_node_2.__dict__ == read_node2.__dict__
+    read_nodes = tuple(read_nodes_lst)
 
-    def test_write_read_node_two_handler_instances_not_default_args(self):
-        print("TEST test_write_read_node_two_handler_instances_not_default_args") if PRINT_OUTPUT_TEST else None
-        print("Writing: ") if PRINT_OUTPUT_TEST else None
-        if os.path.isfile(TREE_FILE_TEST):
-            os.remove(TREE_FILE_TEST)
+    for written, read in zip(written_nodes, read_nodes):
+        assert written.__dict__ == read.__dict__
 
-        tree_file_handler_writer = TreeFileHandler(TREE_FILE_TEST, 5, 4 * 1024)
-        print(tree_file_handler_writer) if PRINT_OUTPUT_TEST else None
-        written_node_1 = Node(False, [[1, 1], [2, 2], [3, 3], [4, 4], [5, 5]], [])
-        written_node_2 = Node(True, [[9, 8], [7, 6], [5, 4], [3, 2], [1, 0]], [1, 2])
-        id1 = tree_file_handler_writer.insert_node(written_node_1)
-        id2 = tree_file_handler_writer.insert_node(written_node_2)
+    assert compare_tree_file_handler_dictionary(writer_dict, tree_file_handler_reader.__dict__)
 
-        print(tree_file_handler_writer) if PRINT_OUTPUT_TEST else None
-        writer_dict = tree_file_handler_writer.__dict__
-        # print(writer_dict) if PRINT_OUTPUT_TEST else None
-        del tree_file_handler_writer
+    if os.path.isfile(TREE_FILE_TEST):
+        os.remove(TREE_FILE_TEST)
 
-        print("Reading: ") if PRINT_OUTPUT_TEST else None
-        tree_file_handler_reader = TreeFileHandler(TREE_FILE_TEST, 5, 4 * 1024)
-        print(tree_file_handler_reader) if PRINT_OUTPUT_TEST else None
 
-        read_node1 = tree_file_handler_reader.get_node(id1)
-        read_node2 = tree_file_handler_reader.get_node(id2)
-        print(tree_file_handler_reader) if PRINT_OUTPUT_TEST else None
+@pytest.mark.parametrize('tree_file_handler_args, written_nodes', [
+    (
+            dict(filename=TREE_FILE_TEST, dimensions=2, node_size=1024),
+            (
+                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2], is_leaf=True),
+                    Node(mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+            )
+    ),
+    (
+            dict(filename=TREE_FILE_TEST),
+            (
+                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
+                    Node(mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+            )
+    ),
+    (
+            dict(filename=TREE_FILE_TEST),
+            (
+                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
+                    Node(mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True),
+                    Node(mbb=MBB((MBBDim(7, 6), MBBDim(4, 5))), entry_ids=[3, 4], is_leaf=False),
+                    Node(mbb=MBB((MBBDim(71, 623), MBBDim(49, 50))), entry_ids=[3, 4, 5, 3, 1], is_leaf=False),
+                    Node(mbb=MBB((MBBDim(-3, 0), MBBDim(-4, 3434))),
+                         entry_ids=[323434, 43434, 5, 3, 1, 343, 1, 2, 3, 33, 123123, 234], is_leaf=False),
+            )
+    ),
+    (
+            dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
+                 trunk_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
+            (
+                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
+                         is_leaf=False),
+                    Node(mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
+                         entry_ids=[1, 2], is_leaf=True)
+            )
+    ),
+])
+def test_write_update_nodes_swap(tree_file_handler_args, written_nodes):
+    if os.path.isfile(TREE_FILE_TEST):
+        os.remove(TREE_FILE_TEST)
 
-        print(written_node_1) if PRINT_OUTPUT_TEST else None
-        print(read_node1) if PRINT_OUTPUT_TEST else None
-        print(written_node_2) if PRINT_OUTPUT_TEST else None
-        print(read_node2) if PRINT_OUTPUT_TEST else None
+    tree_file_handler = TreeFileHandler(**tree_file_handler_args)
 
-        assert written_node_2.__dict__ == read_node2.__dict__
-        assert written_node_2.__dict__ == read_node2.__dict__
-        print(writer_dict) if PRINT_OUTPUT_TEST else None
-        print(tree_file_handler_reader) if PRINT_OUTPUT_TEST else None
-        assert self.compare_tree_file_handler_dictionary(writer_dict, tree_file_handler_reader.__dict__)
-        # assert writer_dict == tree_file_handler_reader.__dict__
-        # tree_file_handler_reader.__del__()
+    node_ids = []
+    for node in written_nodes:
+        new_id = tree_file_handler.insert_node(node)
+        node_ids += [new_id]
+
+    read_nodes_lst = []
+    for node_id in node_ids:
+        read_node = tree_file_handler.get_node(node_id)
+        read_nodes_lst += [read_node]
+
+    read_nodes_inverted = tuple(read_nodes_lst[::-1])
+
+    for node_id, updated_node in zip(node_ids, read_nodes_inverted):
+        tree_file_handler.update_node(node_id, updated_node)
+
+    updated_nodes_lst = []
+    for node_id in node_ids:
+        updated_node = tree_file_handler.get_node(node_id)
+        updated_nodes_lst += [updated_node]
+
+    updated_nodes = tuple(updated_nodes_lst)
+
+    for written, read in zip(written_nodes[::-1], updated_nodes):
+        assert written.__dict__ == read.__dict__
+
+    if os.path.isfile(TREE_FILE_TEST):
+        os.remove(TREE_FILE_TEST)
