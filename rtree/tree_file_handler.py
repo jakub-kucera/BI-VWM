@@ -86,6 +86,9 @@ class TreeFileHandler:
 
         self.current_position = self.offset_size + (self.highest_id + 1) * self.id_size
 
+        self.nodes_read_count = 0
+        self.nodes_written_count = 0
+
     def __del__(self):
         if not self.file.closed:
             self.file.flush()
@@ -205,6 +208,7 @@ class TreeFileHandler:
         address = self.__get_node_address(node_id)
 
         self.file.seek(address, 0)
+        self.nodes_read_count += 1
         return self.__get_node_object()
 
     def get_next_node(self) -> Optional[Node]:
@@ -213,6 +217,7 @@ class TreeFileHandler:
             return None
 
         self.file.seek(address, 0)
+        self.nodes_read_count += 1
         return self.__get_node_object()
 
     def write_node(self, node: Node):
@@ -243,6 +248,8 @@ class TreeFileHandler:
         self.__update_file_size()
         self.current_position = self.file.tell()
 
+        self.nodes_written_count += 1
+
         return node_id
 
     def insert_node(self, node: Node) -> int:
@@ -258,4 +265,5 @@ class TreeFileHandler:
     def update_node(self, node_id: int, node: Node):
         address = self.__get_node_address(node_id)
         self.file.seek(address, 0)
+        self.nodes_written_count += 1
         return self.write_node(node)

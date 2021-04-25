@@ -118,6 +118,8 @@ class RTree:
         # tree depth (start from 0 or 1?)
         self.depth = 0
 
+        self.deleted_db_entries_counter = 0
+
         # randomly generated sequence of bytes
         unique_sequence = secrets.token_bytes(UNIQUE_SEQUENCE_LENGTH)
 
@@ -154,7 +156,9 @@ class RTree:
         pass
 
     # search for node in tree based on coordinates
-    def search_node(self, coordinates) -> DatabaseEntry:  # -> Node:  # maybe allow to return list of NOdes
+    def search_node(self, coordinates) -> Tuple[
+        DatabaseEntry, int, int]:  # -> Node:  # maybe allow to return list of NOdes
+        # todo visited nodes counter. Same for other searches
         pass
 
     def search_rectangle(self, rectangle) -> List[DatabaseEntry]:
@@ -172,14 +176,21 @@ class RTree:
         # for entry in entries:
         pass
 
-    def delete_entry(self, *entries: List[DatabaseEntry]):
-        # for entry in entries:
-        pass
+    def __too_many_deleted_entries(self):
+        return (self.node_size ** self.depth) / 2 < self.deleted_db_entries_counter
+
+    def __delete_entry(self, entry: DatabaseEntry):
+        if self.__too_many_deleted_entries:
+            # todo shake tree
+            pass
+        # todo delete (maybe before shake)
+        self.deleted_db_entries_counter += 1
+
+    def delete_entries(self, *entries: DatabaseEntry):
+        for entry in entries:
+            self.__delete_entry(entry)
 
     def linear_search(self, parameters):
-        pass
-
-    def __delete_node(self):
         pass
 
     def rebuild(self):

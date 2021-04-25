@@ -82,11 +82,9 @@ class Database:
         # remove flag and dimensions from the "self.filesize", data is variable and must be handled differently
         return (bit_positon < ((self.filesize - RECORD_FLAG_SIZE) - (self.dimensions * self.parameter_record_size)))
 
-    def search(self, byte_position: int) -> Optional[DatabaseEntry]:
+    def search(self, byte_position: int) -> DatabaseEntry:
         if not self.__verify_byte_position(byte_position):
-            # throw
-            print("Database error! Requesting position outside the file.")
-            return None
+            raise ValueError("Database error! Requesting position outside the file.")
 
         self.file.seek(byte_position, 0)
 
@@ -104,13 +102,9 @@ class Database:
         
         return DatabaseEntry(coordinates, data, is_present)
 
-    def delete(self):
-        pass
-
     def create(self, new_record: DatabaseEntry) -> int:
-        if(len(new_record.coordinates) != self.dimensions):
-            # throw
-            print("Data creation error! recieved incorrent dimensions.")
+        if len(new_record.coordinates) != self.dimensions:
+            raise ValueError("Data creation error! recieved incorrent dimensions.")
 
         self.__update_file_size()
         beginning = self.filesize
@@ -132,9 +126,7 @@ class Database:
 
     def mark_to_delete(self, byte_position: int):
         if (not self.__verify_byte_position(byte_position)):
-            # throw
-            print("Database error! Requesting position outside the file.")
-            return
+            raise ValueError("Database error! Requesting position outside the file.")
 
         self.file.seek(byte_position, 0)
 

@@ -73,6 +73,8 @@ class MBB:
         self.box = new_box
         self.size = self.get_size(self.box)
 
+    # todo also check overlap between different MBBs
+
     def size_increase_insert(self, new_entry: Tuple[MBBDim, ...]):
         """Calculates size of MBB if a new entry were to be inserted"""
         old_size = self.size

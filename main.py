@@ -86,7 +86,7 @@ flag(marked as deleted), N * [min, max], (pickled) data
 """
 
 """
-todo suggestions: 
+todo suggestions:
 Database
 RTREE main functionality (high level stuff)
 Load from files RTree
