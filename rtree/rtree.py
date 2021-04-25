@@ -11,7 +11,6 @@ from rtree.database_entry import DatabaseEntry
 from rtree.node import Node
 from rtree.tree_file_handler import TreeFileHandler
 
-
 # maybe rename to Index, use rtree only as module name
 
 
@@ -38,10 +37,6 @@ class RTree:
             return unique_sequence, config_hash
         except OSError:
             raise OSError(f"Cannot read unique_sequence and config_hash from file: {file_name}")
-        # with open(file_name, 'r+b') as file:
-        #     unique_sequence = file.read(UNIQUE_SEQUENCE_LENGTH)
-        #     config_hash = file.read(CONFIG_HASH_LENGTH)
-        #     return unique_sequence, config_hash
 
     @staticmethod
     def try_delete_file(file_name: str) -> bool:
@@ -150,7 +145,7 @@ class RTree:
             pass
 
     def __del__(self):
-        pass  # maybe delete file
+        pass
 
     # search for node in tree based on coordinates
     def search_node(self, coordinates) -> DatabaseEntry:  # -> Node:  # maybe allow to return list of NOdes
@@ -159,7 +154,7 @@ class RTree:
     def search_rectangle(self, rectangle) -> List[DatabaseEntry]:
         pass
 
-    def search_nearest_k_neighbours(self, k: int) -> List[DatabaseEntry]:
+    def search_nearest_k_neighbours(self, database_entry: DatabaseEntry, k: int) -> List[DatabaseEntry]:
         pass
 
     # gets node directly from file, based on id
@@ -182,4 +177,10 @@ class RTree:
         pass
 
     def rebuild(self):
+        pass
+
+    def get_all_nodes(self):
+        """Returns all RTree nodes. Do not call on larger rtrees."""
+        # Maybe use self.search_rectangle(big rectangle)
+        # or use self.search_nearest_k_neighbours(random entry, number of nodes / giant number)
         pass
