@@ -6,18 +6,17 @@ from rtree.database_entry import DatabaseEntry
 from rtree.default_config import *
 
 
-class Database:  # maybe rename
+class Database:
     def __init__(self,
-                 filename: str = 'saved_data/database.bin',
+                 filename: str = DEFAULT_DATABASE_FILE,
                  dimensions: int = DEFAULT_DIMENSIONS,
-                 node_size: int = DEFAULT_NODE_SIZE,
-                 rtree_checksum: int = 1231432445422):
-        self.filename = filename
+                 parameters_size: int = PARAMETER_RECORD_SIZE,
+                 unique_sequence: int = 1326475809,
+                 config_hash: int = 9085746231):
+        self.filename = WORKING_DIRECTORY + filename
         self.dimensions = dimensions
-        self.parameter_record_size = PARAMETER_RECORD_SIZE
-        self.node_id_size = NODE_ID_SIZE
-        self.offset_size = CHECKSUM_HEADER_SIZE
-        self.header_size = CHECKSUM_HEADER_SIZE
+        self.parameter_record_size = parameters_size
+        self.header_size = UNIQUE_SEQUENCE_LENGTH + CONFIG_HASH_LENGTH
 
         # create file if not exists
         save_header_to_file = False
@@ -34,11 +33,11 @@ class Database:  # maybe rename
 
         # verify file
         if save_header_to_file:
-            self.__set_checksum_header(rtree_checksum)
+            self.__set_header(unique_sequence, config_hash)
         else:
-            checksum = self.__get_checksum_header()
-            if(checksum != rtree_checksum):
-                # raise error
+            (unique, config) = self.__get_header()
+            if(unique != unique_sequence or config != config_hash):
+                # throw
                 print("Invalid database file! Header not matching the rtree definition.")
 
         self.filesize = 0
@@ -61,22 +60,24 @@ class Database:  # maybe rename
     def __update_file_size(self):
         self.filesize = os.path.getsize(self.filename)
 
-
-    def __set_checksum_header(self, checksum: int):
-        # make sure we are on the start of file
+    def __set_header(self, unique: int, config: int):
         self.file.seek(0, 0)
-        self.file.write(checksum.to_bytes(self.header_size, byteorder=DATABASE_BYTEORDER, signed=False))
-        self.current_position = self.file.tell()
-
-    def __get_checksum_header(self) -> int:
-        # make sure we are on the start of file
-        self.file.seek(0, 0)
-        checksum = int.from_bytes(self.file.read(self.header_size), byteorder=DATABASE_BYTEORDER, signed=False)
-
+        
+        self.file.write(unique.to_bytes(UNIQUE_SEQUENCE_LENGTH, byteorder=DATABASE_BYTEORDER, signed=False))
+        self.file.write(config.to_bytes(CONFIG_HASH_LENGTH, byteorder=DATABASE_BYTEORDER, signed=False))
+        
         self.file.flush()
-        self.offset_size = self.header_size
 
-        return checksum
+    def __get_header(self) -> (int, int):
+        self.file.seek(0, 0)
+        
+        unique = int.from_bytes(self.file.read(UNIQUE_SEQUENCE_LENGTH), byteorder=DATABASE_BYTEORDER, signed=False)
+        config = int.from_bytes(self.file.read(CONFIG_HASH_LENGTH), byteorder=DATABASE_BYTEORDER, signed=False)
+        
+        self.file.flush()
+        self.current_position = self.header_size
+        
+        return (unique, config)
 
 
     def search(self, positon: int) -> DatabaseEntry:
