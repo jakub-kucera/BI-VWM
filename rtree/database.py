@@ -81,7 +81,7 @@ class Database:
 
     def __verify_bit_position(self, bit_positon: int) -> bool:
         # remove flag and dimensions from the "self.filesize", data is variable and must be handled differently
-        return (bit_positon < self.filesize)
+        return (bit_positon < ((self.filesize - RECORD_FLAG_SIZE) - (self.dimensions * self.parameter_record_size)))
 
 
     def search(self, bit_positon: int) -> Optional[DatabaseEntry]:
@@ -112,7 +112,7 @@ class Database:
     def create(self, new_record: DatabaseEntry) -> int:
         if(len(new_record.coordinates) != self.dimensions):
             # throw
-            print("Data creation error! recieved incorrent dimensions.", len(record.coordinates), self.dimensions)
+            print("Data creation error! recieved incorrent dimensions.")
 
         self.__update_file_size()
         beginning = self.filesize
