@@ -1,6 +1,6 @@
 import os
 import pickle
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from rtree.database_entry import DatabaseEntry
 from rtree.default_config import *
@@ -11,8 +11,8 @@ class Database:
                  filename: str = DEFAULT_DATABASE_FILE,
                  dimensions: int = DEFAULT_DIMENSIONS,
                  parameters_size: int = PARAMETER_RECORD_SIZE,
-                 unique_sequence: int = 1326475809,
-                 config_hash: int = 9085746231):
+                 unique_sequence: bytes = DEMO_UNIQUE_SEQUENCE,
+                 config_hash: bytes = DEMO_CONFIG_HASH):
         self.filename = WORKING_DIRECTORY + filename
         self.dimensions = dimensions
         self.parameter_record_size = parameters_size
@@ -45,7 +45,6 @@ class Database:
 
         self.current_position = self.filesize
 
-    
     def __del__(self):
         if not self.file.closed:
             self.file.flush()
@@ -60,37 +59,36 @@ class Database:
     def __update_file_size(self):
         self.filesize = os.path.getsize(self.filename)
 
-    def __set_header(self, unique: int, config: int):
+    def __set_header(self, unique: bytes, config: bytes):
         self.file.seek(0, 0)
-        
-        self.file.write(unique.to_bytes(UNIQUE_SEQUENCE_LENGTH, byteorder=DATABASE_BYTEORDER, signed=False))
-        self.file.write(config.to_bytes(CONFIG_HASH_LENGTH, byteorder=DATABASE_BYTEORDER, signed=False))
-        
+
+        self.file.write(unique)
+        self.file.write(config)
+
         self.file.flush()
 
-    def __get_header(self) -> (int, int):
+    def __get_header(self) -> Tuple[bytes, bytes]:
         self.file.seek(0, 0)
-        
-        unique = int.from_bytes(self.file.read(UNIQUE_SEQUENCE_LENGTH), byteorder=DATABASE_BYTEORDER, signed=False)
-        config = int.from_bytes(self.file.read(CONFIG_HASH_LENGTH), byteorder=DATABASE_BYTEORDER, signed=False)
-        
+
+        unique = self.file.read(UNIQUE_SEQUENCE_LENGTH)
+        config = self.file.read(CONFIG_HASH_LENGTH)
+
         self.file.flush()
         self.current_position = self.header_size
-        
+
         return (unique, config)
 
     def __verify_bit_position(self, bit_positon: int) -> bool:
         # remove flag and dimensions from the "self.filesize", data is variable and must be handled differently
         return (bit_positon < self.filesize)
 
-
-    def search(self, bit_positon: int) -> Optional[DatabaseEntry]:
-        if( not self.__verify_bit_position(bit_positon) ):
+    def search(self, byte_position: int) -> Optional[DatabaseEntry]:
+        if not self.__verify_bit_position(byte_position):
             # throw
             print("Database error! Requesting position outside the file.")
             return None
 
-        self.file.seek(bit_positon, 0)
+        self.file.seek(byte_position, 0)
 
         is_present = bool.from_bytes(self.file.read(RECORD_FLAG_SIZE), byteorder=DATABASE_BYTEORDER, signed=False)
 
@@ -112,7 +110,7 @@ class Database:
     def create(self, new_record: DatabaseEntry) -> int:
         if(len(new_record.coordinates) != self.dimensions):
             # throw
-            print("Data creation error! recieved incorrent dimensions.", len(record.coordinates), self.dimensions)
+            print("Data creation error! recieved incorrent dimensions.", len(new_record.coordinates), self.dimensions)
 
         self.__update_file_size()
         beginning = self.filesize
@@ -132,16 +130,16 @@ class Database:
 
         return beginning
 
-    def mark_to_delete(self, bit_positon: int):
-        if( not self.__verify_bit_position(bit_positon) ):
+    def mark_to_delete(self, byte_position: int):
+        if (not self.__verify_bit_position(byte_position)):
             # throw
             print("Database error! Requesting position outside the file.")
             return
-        
-        self.file.seek(bit_positon, 0)
+
+        self.file.seek(byte_position, 0)
 
         self.file.write(False.to_bytes(RECORD_FLAG_SIZE, byteorder=DATABASE_BYTEORDER, signed=False))
-        
+
         self.file.flush()
 
     # deletes marked entries and
@@ -154,7 +152,7 @@ class Database:
 
         is_present = bool.from_bytes(self.file.read(RECORD_FLAG_SIZE), byteorder=DATABASE_BYTEORDER, signed=False)
 
-        if(not is_present): # this entry is to be deleted, not return its value
+        if not is_present:  # this entry is to be deleted, not return its value
             return None
 
         coordinates = []
