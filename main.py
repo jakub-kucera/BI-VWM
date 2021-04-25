@@ -29,7 +29,7 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
     fig, ax = plt.subplots()
     ax.plot([0, 0], [0, 0])
 
-    database_entries_ids: List[int] = []
+    database_entries_addresses: List[int] = []
     # gets all the rtree nodes
     nodes = r_tree.get_all_nodes()
 
@@ -38,7 +38,7 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
 
         if node.is_leaf:
             # gets ids of database entries
-            database_entries_ids.extend(node.entries)
+            database_entries_addresses.extend(node.entries)
             pass
         else:
             # Create a Rectangle and add it to plot
@@ -47,12 +47,18 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
                                           linewidth=1, edgecolor='r', facecolor='None')
             ax.add_patch(node_rect)
 
-    # todo change when database is implemented
-    # for db_entry_id in database_entries_ids:
-    #     box = r_tree.database.search(db_entry_id).box
-    #     entry_rect = patches.Rectangle((box[0].low, box[1].low), box[0].high - box[0].low, box[1].high - box[1].low,
-    #                                    linewidth=1, edgecolor='b', facecolor='None')
-    #     ax.add_patch(entry_rect)
+    for db_entry_address in database_entries_addresses:
+        entry = r_tree.database.search(db_entry_address)
+        if entry is None:
+            raise ValueError(f"Database entry not found. Entry address = {db_entry_address}")
+
+        coordinates = entry.coordinates
+
+        if len(coordinates) != r_tree.dimensions:
+            raise ValueError(f"Database entry has dimension of {len(coordinates)}, \
+            but rtree has dimension of {r_tree.dimensions}")
+
+        plt.plot(105, 200, 'bo')
 
     plt.axis('off')
     plt.gca().set_position([0, 0, 1, 1])

@@ -132,7 +132,7 @@ class RTree:
         self.children_per_node = self.tree_handler.children_per_node
 
         # database object (database.py)
-        self.database = Database(filename=self.tree_file, dimensions=self.dimensions,
+        self.database = Database(filename=self.database_file, dimensions=self.dimensions,
                                  parameters_size=self.parameters_size,
                                  unique_sequence=unique_sequence, config_hash=self.config_hash)
 

@@ -16,8 +16,8 @@ class TreeFileHandler:
                  parameters_size: int = PARAMETER_RECORD_SIZE,
                  tree_depth: int = 0,
                  trunk_id: int = 0,
-                 unique_sequence: bytes = b'\xf1\x97L\xc9\xe7\x1c\x98\x88\xf1\x97L\xc9\xe7\x1c\x98\x88\xe7\x1c\x98\x34',
-                 config_hash: bytes = b'\xf1\x97L\xc9\xe7\x1c\x98\x88\xf1\x97L\xc9\xe7\x1c\x98\x88\xe7\x1c\x98\x21'):
+                 unique_sequence: bytes = DEMO_UNIQUE_SEQUENCE,
+                 config_hash: bytes = DEMO_CONFIG_HASH):
         # init default values, will be changed when loading from existing file
         self.filename = filename
         self.dimensions = dimensions
