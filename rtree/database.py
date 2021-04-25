@@ -147,3 +147,43 @@ class Database:
     # deletes marked entries and
     def recalculate(self):
         pass
+
+    # future linear search stuffu
+
+    def __get_next_entry(self) -> Optional[DatabaseEntry]:
+
+        is_present = bool.from_bytes(self.file.read(RECORD_FLAG_SIZE), byteorder=DATABASE_BYTEORDER, signed=False)
+
+        if(not is_present): # this entry is to be deleted, not return its value
+            return None
+
+        coordinates = []
+        for _ in range(self.dimensions):
+            dim = int.from_bytes(self.file.read(self.parameter_record_size), byteorder=DATABASE_BYTEORDER, signed=True)
+            coordinates.append(dim)
+
+        data = pickle.load(self.file)
+
+        self.file.flush()
+
+        return DatabaseEntry(coordinates, data, is_present)
+
+    def FUTURE_linear_search_for(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
+        # point at start
+        self.file.seek(self.header_size, 0)
+
+        try:
+            tmp = self.__get_next_entry()
+
+            while(tmp == None or tmp.coordinates != coordinates):
+                tmp = self.__get_next_entry()
+
+            # unnecessary if here?
+            if(tmp.coordinates == coordinates):
+                return tmp
+
+        except:
+            print("probably reached EOF, all entries were compared")
+        
+        # coordinates not matched
+        return None
