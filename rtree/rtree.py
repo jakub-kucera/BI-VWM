@@ -50,6 +50,12 @@ class RTree:
     @staticmethod
     def check_files_load_existing_rtree(tree_file: str, database_file: str, override: bool) -> bool:
         """Checks files if they can be used and if an existing tree is supposed to be loaded"""
+        try:
+            if not os.path.isdir(WORKING_DIRECTORY):
+                os.mkdir(WORKING_DIRECTORY)    
+        except OSError:
+            raise OSError(f"Cannot open or create working directory: {WORKING_DIRECTORY}")
+
         tree_exists = os.path.isfile(tree_file)
         database_exists = os.path.isfile(database_file)
 
