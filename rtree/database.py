@@ -1,6 +1,6 @@
 import os
 import pickle
-from typing import Optional
+from typing import Optional, List
 
 from rtree.database_entry import DatabaseEntry
 from rtree.default_config import *
@@ -79,9 +79,20 @@ class Database:
         
         return (unique, config)
 
+    def __verify_bit_position(self, bit_positon: int) -> bool:
+        # remove flag and dimensions from the "self.filesize", data is variable and must be handled differently
+        return (bit_positon < self.filesize)
 
-    def search(self, positon: int) -> DatabaseEntry:
-        self.file.seek(positon, 0)
+
+    def search(self, bit_positon: int) -> Optional[DatabaseEntry]:
+        if( not self.__verify_bit_position(bit_positon) ):
+            # throw
+            print("Database error! Requesting position outside the file.")
+            return None
+
+        self.file.seek(bit_positon, 0)
+
+        is_present = bool.from_bytes(self.file.read(RECORD_FLAG_SIZE), byteorder=DATABASE_BYTEORDER, signed=False)
 
         # reads the range in each dimension
         coordinates = []
@@ -90,35 +101,48 @@ class Database:
             coordinates.append(dim)
 
         data = pickle.load(self.file)
+
+        self.file.flush()
         
-        return DatabaseEntry(coordinates, data)
+        return DatabaseEntry(coordinates, data, is_present)
 
     def delete(self):
         pass
 
-    def create(self, record: DatabaseEntry) -> int: # return entry id or -1/throw on error
-        if(len(record.coordinates) != self.dimensions):
+    def create(self, new_record: DatabaseEntry) -> int:
+        if(len(new_record.coordinates) != self.dimensions):
+            # throw
             print("Data creation error! recieved incorrent dimensions.", len(record.coordinates), self.dimensions)
 
         self.__update_file_size()
         beginning = self.filesize
 
+        # append to the end of database file
         self.file.seek(0, 2)
 
-        for dimension in record.coordinates:
+        self.file.write(new_record.is_present.to_bytes(RECORD_FLAG_SIZE, byteorder=DATABASE_BYTEORDER, signed=False))
+
+        for dimension in new_record.coordinates:
             self.file.write(dimension.to_bytes(self.parameter_record_size, byteorder=DATABASE_BYTEORDER, signed=True))
 
-        # ??
-        pickle.dump(record.data, self.file)
+        pickle.dump(new_record.data, self.file)
 
         self.file.flush()
         self.__update_file_size()
-        self.current_position = self.file.tell()
 
         return beginning
 
-    def mark_to_delete(self, entry_id: int):
-        pass
+    def mark_to_delete(self, bit_positon: int):
+        if( not self.__verify_bit_position(bit_positon) ):
+            # throw
+            print("Database error! Requesting position outside the file.")
+            return
+        
+        self.file.seek(bit_positon, 0)
+
+        self.file.write(False.to_bytes(RECORD_FLAG_SIZE, byteorder=DATABASE_BYTEORDER, signed=False))
+        
+        self.file.flush()
 
     # deletes marked entries and
     def recalculate(self):
