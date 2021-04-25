@@ -13,7 +13,7 @@ class Database:
                  parameters_size: int = PARAMETER_RECORD_SIZE,
                  unique_sequence: bytes = DEMO_UNIQUE_SEQUENCE,
                  config_hash: bytes = DEMO_CONFIG_HASH):
-        self.filename = WORKING_DIRECTORY + filename
+        self.filename = filename
         self.dimensions = dimensions
         self.parameter_record_size = parameters_size
         self.header_size = UNIQUE_SEQUENCE_LENGTH + CONFIG_HASH_LENGTH
