@@ -84,7 +84,8 @@ class RTree:
             return True
         raise ValueError(f"Error: RTree file ({tree_file}) is not compatible with database file ({database_file})")
 
-    def __init__(self, tree_file: str = DEFAULT_TREE_FILE,
+    def __init__(self, working_directory: str = WORKING_DIRECTORY,
+                 tree_file: str = DEFAULT_TREE_FILE,
                  database_file: str = DEFAULT_DATABASE_FILE,
                  override_file: bool = False,
                  dimensions: int = DEFAULT_DIMENSIONS,
@@ -94,8 +95,8 @@ class RTree:
                  max_threads: int = None):
 
         # path to binary file with saved tree / already opened file object
-        self.tree_file = WORKING_DIRECTORY + tree_file
-        self.database_file = WORKING_DIRECTORY + database_file
+        self.tree_file = working_directory + tree_file
+        self.database_file = working_directory + database_file
 
         # checks if files exists and are valid.
         load_from_files = self.check_files_load_existing_rtree(tree_file=self.tree_file,
@@ -121,7 +122,7 @@ class RTree:
         self.deleted_db_entries_counter = 0
 
         # randomly generated sequence of bytes
-        unique_sequence = secrets.token_bytes(UNIQUE_SEQUENCE_LENGTH)
+        self.unique_sequence = secrets.token_bytes(UNIQUE_SEQUENCE_LENGTH)
 
         # Generate an hash based on RTree parameters
         self.config_hash = self.calculate_config_hash(
@@ -135,29 +136,37 @@ class RTree:
         self.tree_handler = TreeFileHandler(filename=self.tree_file, dimensions=self.dimensions,
                                             node_size=self.node_size, id_size=self.id_size, tree_depth=self.depth,
                                             parameters_size=self.parameters_size, trunk_id=self.trunk_id,
-                                            unique_sequence=unique_sequence, config_hash=self.config_hash)
+                                            unique_sequence=self.unique_sequence, config_hash=self.config_hash)
 
         self.children_per_node = self.tree_handler.children_per_node
+
+        if load_from_files:
+            # override attributes by values from tree_handler and database
+            # print("LOADING FROM FILES")
+            self.config_hash = self.tree_handler.config_hash
+            self.unique_sequence = self.tree_handler.unique_sequence
+            # self.children_per_node = self.tree_handler.children_per_node
+            self.node_size = self.tree_handler.node_size
+            self.dimensions = self.tree_handler.dimensions
+            self.id_size = self.tree_handler.id_size
+            self.trunk_id = self.tree_handler.trunk_id
+            self.tree_depth = self.tree_handler.tree_depth
+            self.parameters_size = self.tree_handler.parameters_size
+        else:
+            # todo add first empty node
+            pass
 
         # database object (database.py)
         self.database = Database(filename=self.database_file, dimensions=self.dimensions,
                                  parameters_size=self.parameters_size,
-                                 unique_sequence=unique_sequence, config_hash=self.config_hash)
-
-        # todo when loading from file, can be
-        if load_from_files:
-            # override attributes by values from tree_handler and database
-            pass
-        else:
-            # todo add first empty node
-            pass
+                                 unique_sequence=self.unique_sequence, config_hash=self.config_hash)
 
     def __del__(self):
         pass
 
     # search for node in tree based on coordinates
-    def search_node(self, coordinates) -> Tuple[
-        DatabaseEntry, int, int]:  # -> Node:  # maybe allow to return list of NOdes
+    def search_node(self, coordinates) \
+            -> Tuple[DatabaseEntry, int, int]:  # -> Node:  # maybe allow to return list of NOdes
         # todo visited nodes counter. Same for other searches
         pass
 
