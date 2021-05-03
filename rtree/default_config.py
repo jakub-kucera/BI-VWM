@@ -18,7 +18,9 @@ UNIQUE_SEQUENCE_LENGTH = 20
 CONFIG_HASH_LENGTH = 20  # length of hash from SHA1 function
 
 # Testing
+TESTING_DIRECTORY = "tests/testing_data/"
 TREE_FILE_TEST = "testingTree.bin"
+DATABASE_FILE_TEST = "test_database.bin"
 PRINT_OUTPUT_TEST = False
 DEMO_UNIQUE_SEQUENCE = b'\xf1\x97L\xc9\xe7\x1c\x98\x88\xf1\x97L\xc9\xe7\x1c\x98\x88\xe7\x1c\x98\x34'
 DEMO_CONFIG_HASH = b'\xf1\x97L\xc9\xe7\x1c\x98\x88\xf1\x97L\xc9\xe7\x1c\x98\x88\xe7\x1c\x98\x21'

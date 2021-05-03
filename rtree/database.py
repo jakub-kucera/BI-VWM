@@ -8,7 +8,7 @@ from rtree.default_config import *
 
 class Database:
     def __init__(self,
-                 filename: str = DEFAULT_DATABASE_FILE,
+                 filename: str = WORKING_DIRECTORY + DEFAULT_DATABASE_FILE,
                  dimensions: int = DEFAULT_DIMENSIONS,
                  parameters_size: int = PARAMETER_RECORD_SIZE,
                  unique_sequence: bytes = DEMO_UNIQUE_SEQUENCE,
@@ -36,9 +36,8 @@ class Database:
             self.__set_header(unique_sequence, config_hash)
         else:
             (unique, config) = self.__get_header()
-            if(unique != unique_sequence or config != config_hash):
-                # throw
-                print("Invalid database file! Header not matching the rtree definition.")
+            if unique != unique_sequence or config != config_hash:
+                raise Exception("Invalid database file! Header not matching the rtree definition.")
 
         self.filesize = 0
         self.__update_file_size()
@@ -78,9 +77,9 @@ class Database:
 
         return (unique, config)
 
-    def __verify_byte_position(self, bit_positon: int) -> bool:
+    def __verify_byte_position(self, byte_position: int) -> bool:
         # remove flag and dimensions from the "self.filesize", data is variable and must be handled differently
-        return (bit_positon < ((self.filesize - RECORD_FLAG_SIZE) - (self.dimensions * self.parameter_record_size)))
+        return (byte_position < ((self.filesize - RECORD_FLAG_SIZE) - (self.dimensions * self.parameter_record_size)))
 
     def search(self, byte_position: int) -> DatabaseEntry:
         if not self.__verify_byte_position(byte_position):
@@ -174,6 +173,6 @@ class Database:
 
         except:
             print("probably reached EOF, all entries were compared")
-        
+
         # coordinates not matched
         return None
