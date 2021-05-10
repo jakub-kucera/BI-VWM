@@ -24,17 +24,17 @@ stages:
 #  - docs
 #  - deploy
 
-lint:
-  stage: lint
-  cache:
-    <<: *global_cache
-    paths:
-      - $PRE_COMMIT_HOME
-      - .cache/pip
-      - venv/
-  script:
-    - pip install pre-commit
-    - pre-commit run --all-files
+#lint:
+#  stage: lint
+#  cache:
+#    <<: *global_cache
+#    paths:
+#      - $PRE_COMMIT_HOME
+#      - .cache/pip
+#      - venv/
+#  script:
+#    - pip install pre-commit
+#    - pre-commit run --all-files
 
 test_unit:
   stage: test
@@ -42,18 +42,18 @@ test_unit:
     - pip install -r requirements.txt
     - python -m pytest -v $TEST_DIR
 
-sphinx:
-  stage: docs
-  script:
-    - pip install -r requirements.txt -r requirements-docs.txt
-    - make html -C docs
-
-docker_build:
-  stage: deploy
-  image: docker:20
-  services:
-    - docker:20-dind
-  cache: { }
-  before_script: [ ]
-  script:
-    - docker build .
+#sphinx:
+#  stage: docs
+#  script:
+#    - pip install -r requirements.txt -r requirements-docs.txt
+#    - make html -C docs
+#
+#docker_build:
+#  stage: deploy
+#  image: docker:20
+#  services:
+#    - docker:20-dind
+#  cache: { }
+#  before_script: [ ]
+#  script:
+#    - docker build .
