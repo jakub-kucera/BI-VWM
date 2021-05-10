@@ -63,7 +63,7 @@ def test_tree_create(rtree_args):
                  tree_file=TREE_FILE_TEST,
                  database_file=DATABASE_FILE_TEST,
                  **rtree_args)
-
+    del tree
     os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
     os.remove(TESTING_DIRECTORY + DATABASE_FILE_TEST)
 
@@ -102,6 +102,7 @@ def test_tree_create_save_load(rtree_args):
         if key in loaded_tree.__dict__.keys():
             assert loaded_tree.__dict__[key] == value
 
+    del loaded_tree
     os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
     os.remove(TESTING_DIRECTORY + DATABASE_FILE_TEST)
 
@@ -145,5 +146,6 @@ def test_tree_create_save_override(rtree_args):
         if key in loaded_tree.__dict__.keys():
             assert loaded_tree.__dict__[key] != value
 
+    del loaded_tree
     os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
     os.remove(TESTING_DIRECTORY + DATABASE_FILE_TEST)

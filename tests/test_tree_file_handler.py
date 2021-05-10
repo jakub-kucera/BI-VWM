@@ -66,6 +66,7 @@ def test_create_handler_invalid(rtree_args):
     with pytest.raises(Exception):
         tree_handler = TreeFileHandler(filename=TESTING_DIRECTORY + TREE_FILE_TEST,
                                        **rtree_args)
+        del tree_handler
 
     try:
         os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
@@ -77,24 +78,24 @@ def test_create_handler_invalid(rtree_args):
     (
             dict(filename=TREE_FILE_TEST, dimensions=2, node_size=1024),
             (
-                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2], is_leaf=True),
-                    Node(mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2], is_leaf=True),
+                    Node(node_id=1,mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             )
     ),
     (
             dict(filename=TREE_FILE_TEST),
             (
-                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
-                    Node(mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
+                    Node(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             )
     ),
     (
             dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
                  trunk_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
             (
-                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
                          is_leaf=False),
-                    Node(mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
+                    Node(node_id=1, mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
                          entry_ids=[1, 2], is_leaf=True)
             )
     ),
@@ -120,6 +121,8 @@ def test_write_read_node_one_handler(tree_file_handler_args, written_nodes):
     for written, read in zip(written_nodes, read_nodes):
         assert written.__dict__ == read.__dict__
 
+    del tree_file_handler
+
     if os.path.isfile(TREE_FILE_TEST):
         os.remove(TREE_FILE_TEST)
 
@@ -128,8 +131,8 @@ def test_write_read_node_one_handler(tree_file_handler_args, written_nodes):
     (
             dict(filename=TREE_FILE_TEST),
             (
-                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
-                    Node(mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
+                    Node(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             ),
             dict(filename=TREE_FILE_TEST)
     ),
@@ -137,9 +140,9 @@ def test_write_read_node_one_handler(tree_file_handler_args, written_nodes):
             dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
                  trunk_id=5, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
             (
-                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
                          is_leaf=False),
-                    Node(mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
+                    Node(node_id=1, mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
                          entry_ids=[1, 2], is_leaf=True)
             ),
             dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
@@ -176,6 +179,8 @@ def test_write_read_node_two_handler(tree_file_handler_writer_args,
 
     assert compare_tree_file_handler_dictionary(writer_dict, tree_file_handler_reader.__dict__)
 
+    del tree_file_handler_reader
+
     if os.path.isfile(TREE_FILE_TEST):
         os.remove(TREE_FILE_TEST)
 
@@ -184,25 +189,25 @@ def test_write_read_node_two_handler(tree_file_handler_writer_args,
     (
             dict(filename=TREE_FILE_TEST, dimensions=2, node_size=1024),
             (
-                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2], is_leaf=True),
-                    Node(mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2], is_leaf=True),
+                    Node(node_id=1, mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             )
     ),
     (
             dict(filename=TREE_FILE_TEST),
             (
-                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
-                    Node(mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
+                    Node(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             )
     ),
     (
             dict(filename=TREE_FILE_TEST),
             (
-                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
-                    Node(mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True),
-                    Node(mbb=MBB((MBBDim(7, 6), MBBDim(4, 5))), entry_ids=[3, 4], is_leaf=False),
-                    Node(mbb=MBB((MBBDim(71, 623), MBBDim(49, 50))), entry_ids=[3, 4, 5, 3, 1], is_leaf=False),
-                    Node(mbb=MBB((MBBDim(-3, 0), MBBDim(-4, 3434))),
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
+                    Node(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True),
+                    Node(node_id=2, mbb=MBB((MBBDim(7, 6), MBBDim(4, 5))), entry_ids=[3, 4], is_leaf=False),
+                    Node(node_id=3, mbb=MBB((MBBDim(71, 623), MBBDim(49, 50))), entry_ids=[3, 4, 5, 3, 1], is_leaf=False),
+                    Node(node_id=4, mbb=MBB((MBBDim(-3, 0), MBBDim(-4, 3434))),
                          entry_ids=[323434, 43434, 5, 3, 1, 343, 1, 2, 3, 33, 123123, 234], is_leaf=False),
             )
     ),
@@ -210,9 +215,9 @@ def test_write_read_node_two_handler(tree_file_handler_writer_args,
             dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
                  trunk_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
             (
-                    Node(mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
                          is_leaf=False),
-                    Node(mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
+                    Node(node_id=1, mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
                          entry_ids=[1, 2], is_leaf=True)
             )
     ),
@@ -247,6 +252,8 @@ def test_write_update_nodes_swap(tree_file_handler_args, written_nodes):
 
     for written, read in zip(written_nodes[::-1], updated_nodes):
         assert written.__dict__ == read.__dict__
+
+    del tree_file_handler
 
     if os.path.isfile(TREE_FILE_TEST):
         os.remove(TREE_FILE_TEST)
