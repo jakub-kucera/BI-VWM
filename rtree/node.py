@@ -19,6 +19,7 @@ class Node:
         self.mbb = mbb
         self.entries = entry_ids
         self.is_leaf = is_leaf
+        self.id = None
 
     def __str__(self):
         return str(self.__dict__)

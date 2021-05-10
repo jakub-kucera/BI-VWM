@@ -17,6 +17,8 @@ DELETE_TREE_INDEX_FILE = False
 UNIQUE_SEQUENCE_LENGTH = 20
 CONFIG_HASH_LENGTH = 20  # length of hash from SHA1 function
 
+CACHE_NODES = 16
+
 # Testing
 TESTING_DIRECTORY = "tests/testing_data/"
 TREE_FILE_TEST = "testingTree.bin"

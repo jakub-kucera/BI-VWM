@@ -9,6 +9,7 @@ from rtree.default_config import *
 from rtree.database import Database
 from rtree.database_entry import DatabaseEntry
 from rtree.node import Node
+from rtree.cache import Cache
 from rtree.tree_file_handler import TreeFileHandler
 
 # maybe rename to Index, use rtree only as module name
@@ -161,6 +162,9 @@ class RTree:
                                  parameters_size=self.parameters_size,
                                  unique_sequence=self.unique_sequence, config_hash=self.config_hash)
 
+        # cache object (cache.py)
+        self.cache = Cache(node_size=self.children_per_node, cache_nodes=CACHE_NODES)
+
     def __del__(self):
         pass
 
@@ -178,7 +182,15 @@ class RTree:
 
     # gets node directly from file, based on id
     def __get_node(self, node_id: int) -> Optional[Node]:
-        return self.tree_handler.get_node(node_id)
+        node = cache.search(node_id)
+        if node != None:
+            return node
+
+        node_object = self.tree_handler.get_node(node_id)
+        if node_object == None:
+            raise Exception(f"Node {node_id} not found in tree file")
+        cache.store(node_id, node_object)
+        return node_object
 
     # maybe change from *args to list, might be more memory efficient, idk
     def insert_entry(self, *entries: List[DatabaseEntry]):
