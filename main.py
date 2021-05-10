@@ -1,9 +1,11 @@
 import os
+import pathlib
 from typing import List
 
 from PIL import Image
 from matplotlib import pyplot as plt, patches
 
+from rtree.default_config import WORKING_DIRECTORY
 from rtree.mbb import MBBDim, MBB
 from rtree.node import Node
 from rtree.rtree import RTree
@@ -67,11 +69,24 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
     img.show()
 
 
+def delete_saved_rtree():
+    file_dir = pathlib.Path(WORKING_DIRECTORY)
+    for entry in file_dir.iterdir():
+        if entry.is_file():
+            # print(entry)
+            os.remove(entry)
+
+
 if __name__ == '__main__':
     print("hello, friend")
     # print(cpu_count())
     tree = RTree()
-    visualize(r_tree=tree)
+    print("tree.trunk_id")
+    print(tree.trunk_id)
+    print("tree.get_node(tree.trunk_id)")
+    print(tree.get_node(tree.trunk_id))
+    # visualize(r_tree=tree)
+    # delete_saved_rtree()
 
 """
 Non-leaf node:
