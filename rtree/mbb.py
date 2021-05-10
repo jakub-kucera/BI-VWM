@@ -1,7 +1,7 @@
 """Includes class for MMB and its helper class MMBDim which represents one dimension"""
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, List
 
 
 class MBBDim:
@@ -42,6 +42,11 @@ class MBB:
         for dim in box:
             size *= dim.get_diff()
         return size
+
+    @staticmethod
+    def create_box_from_entry_list(coordinates: List[int]):
+        """Creates MBB from database entry coordinates (1D list)"""
+        MBB(tuple(MBBDim(coord, coord) for coord in coordinates))
 
     def __init__(self, dimensions: Tuple[MBBDim, ...]):
         self.box = dimensions

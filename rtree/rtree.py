@@ -8,6 +8,7 @@ from psutil import cpu_count  # todo <- fix import
 from rtree.default_config import *
 from rtree.database import Database
 from rtree.database_entry import DatabaseEntry
+from rtree.mbb import MBB
 from rtree.node import Node
 from rtree.tree_file_handler import TreeFileHandler
 
@@ -152,14 +153,26 @@ class RTree:
             self.trunk_id = self.tree_handler.trunk_id
             self.tree_depth = self.tree_handler.tree_depth
             self.parameters_size = self.tree_handler.parameters_size
-        else:
-            # todo add first empty node
-            pass
+        # else:
+        #     trunk_node_new = Node.create_emtpy_node(self.dimensions, is_leaf=True)
+        #     self.trunk_id = self.tree_handler.write_node(trunk_node_new)
 
         # database object (database.py)
         self.database = Database(filename=self.database_file, dimensions=self.dimensions,
                                  parameters_size=self.parameters_size,
                                  unique_sequence=self.unique_sequence, config_hash=self.config_hash)
+
+        # if not load_from_files:
+        #     new_entry = DatabaseEntry([0 for coord in range(self.dimensions)],
+        #                               data="this is some data")
+        #     new_entry_id = self.database.create(new_entry)
+        #     trunk_node = self.tree_handler.get_node(self.trunk_id)
+        #     if trunk_node is None:
+        #         raise Exception("Trunk node not found")
+        #
+        #     trunk_node.insert_entry_from_entry(new_entry_id, new_entry)
+        #
+        #     self.tree_handler.update_node(self.trunk_id, trunk_node)
 
     def __del__(self):
         pass
@@ -177,7 +190,7 @@ class RTree:
         pass
 
     # gets node directly from file, based on id
-    def __get_node(self, node_id: int) -> Optional[Node]:
+    def get_node(self, node_id: int) -> Optional[Node]:
         return self.tree_handler.get_node(node_id)
 
     # maybe change from *args to list, might be more memory efficient, idk
