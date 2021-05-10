@@ -182,14 +182,14 @@ class RTree:
 
     # gets node directly from file, based on id
     def __get_node(self, node_id: int) -> Optional[Node]:
-        node = cache.search(node_id)
+        node = self.cache.search(node_id)
         if node != None:
             return node
 
         node_object = self.tree_handler.get_node(node_id)
         if node_object == None:
             raise Exception(f"Node {node_id} not found in tree file")
-        cache.store(node_id, node_object)
+        self.cache.store(node_id, node_object)
         return node_object
 
     # maybe change from *args to list, might be more memory efficient, idk
