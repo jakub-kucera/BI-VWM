@@ -178,7 +178,7 @@ class TreeFileHandler:
         self.current_position = self.current_position + self.node_size
         return old_position
 
-    def __get_node_object(self) -> Node:
+    def __get_node_object(self, node_id: int) -> Node:
 
         # read flag, that determines whether the node is a leaf
         is_leaf = bool(bool.from_bytes(self.file.read(self.node_flag_size), byteorder=TREE_BYTEORDER, signed=False))
@@ -200,7 +200,7 @@ class TreeFileHandler:
             # else:
             #     break
 
-        return Node(mbb=MBB(tuple(rectangle)), entry_ids=child_nodes, is_leaf=is_leaf)
+        return Node(node_id=node_id, mbb=MBB(tuple(rectangle)), entry_ids=child_nodes, is_leaf=is_leaf)
 
     def get_node(self, node_id: int) -> Optional[Node]:
         if node_id > self.highest_id:
@@ -209,8 +209,9 @@ class TreeFileHandler:
 
         self.file.seek(address, 0)
         self.nodes_read_count += 1
-        return self.__get_node_object()
+        return self.__get_node_object(node_id)
 
+    # probably deprecated
     def get_next_node(self) -> Optional[Node]:
         address = self.__get_next_node_address()
         if self.current_position >= self.filesize:
@@ -218,7 +219,7 @@ class TreeFileHandler:
 
         self.file.seek(address, 0)
         self.nodes_read_count += 1
-        return self.__get_node_object()
+        return self.__get_node_object(None)
 
     def write_node(self, node: Node):
         """Writes node on the current position of the file head."""

@@ -9,17 +9,17 @@ class Node:
     """Class represents a single node in the R-tree structure"""
     max_entries_count = 0
 
-    def __init__(self, mbb: MBB, entry_ids: List[int] = None, is_leaf: bool = False):
+    def __init__(self, node_id: int, mbb: MBB, entry_ids: List[int] = None, is_leaf: bool = False):
         if entry_ids is None:
             entry_ids = []
 
         if len(entry_ids) > self.max_entries_count:
             raise ValueError(f"Node cannot have {len(entry_ids)} entries, maximum allowed is: {self.max_entries_count}")
 
+        self.id = node_id
         self.mbb = mbb
         self.entries = entry_ids
         self.is_leaf = is_leaf
-        self.id = None
 
     def __str__(self):
         return str(self.__dict__)
