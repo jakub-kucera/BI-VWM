@@ -86,7 +86,7 @@ if __name__ == '__main__':
     print("tree.get_node(tree.trunk_id)")
     print(tree.get_node(tree.trunk_id))
     # visualize(r_tree=tree)
-    # delete_saved_rtree()
+    delete_saved_rtree()
 
 """
 Non-leaf node:

@@ -251,7 +251,10 @@ def test_write_update_nodes_swap(tree_file_handler_args, written_nodes):
     updated_nodes = tuple(updated_nodes_lst)
 
     for written, read in zip(written_nodes[::-1], updated_nodes):
-        assert written.__dict__ == read.__dict__
+        assert written.mbb == read.mbb
+        assert written.entries == read.entries
+        assert written.is_leaf == read.is_leaf
+        # assert written.__dict__ == read.__dict__
 
     del tree_file_handler
 

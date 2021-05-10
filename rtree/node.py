@@ -15,7 +15,7 @@ class Node:
         return Node(MBB(tuple(MBBDim(0, 0) for dim in range(dimensions))),
                     is_leaf=is_leaf)
 
-    def __init__(self, mbb: MBB, node_id: Optional[int], entry_ids: List[int] = None, is_leaf: bool = False):
+    def __init__(self, mbb: MBB, node_id: Optional[int] = None, entry_ids: List[int] = None, is_leaf: bool = False):
         if entry_ids is None:
             entry_ids = []
 

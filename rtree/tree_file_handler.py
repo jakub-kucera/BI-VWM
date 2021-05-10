@@ -178,7 +178,7 @@ class TreeFileHandler:
         self.current_position = self.current_position + self.node_size
         return old_position
 
-    def __get_node_object(self, node_id: int) -> Node:
+    def __get_node_object(self, node_id: Optional[int]) -> Node:
 
         # read flag, that determines whether the node is a leaf
         is_leaf = bool(bool.from_bytes(self.file.read(self.node_flag_size), byteorder=TREE_BYTEORDER, signed=False))
@@ -186,7 +186,7 @@ class TreeFileHandler:
 
         # reads the range in each dimension
         rectangle = []
-        for _ in range(self.dimensions):  # todo maybe use float by default
+        for _ in range(self.dimensions):
             low = int.from_bytes(self.file.read(self.parameters_size), byteorder=TREE_BYTEORDER, signed=True)
             high = int.from_bytes(self.file.read(self.parameters_size), byteorder=TREE_BYTEORDER, signed=True)
             rectangle.append(MBBDim(low, high))

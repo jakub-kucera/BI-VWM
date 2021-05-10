@@ -13,6 +13,7 @@ from rtree.node import Node
 from rtree.cache import Cache
 from rtree.tree_file_handler import TreeFileHandler
 
+
 # maybe rename to Index, use rtree only as module name
 
 
@@ -54,7 +55,7 @@ class RTree:
         """Checks files if they can be used and if an existing tree is supposed to be loaded"""
         try:
             if not os.path.isdir(WORKING_DIRECTORY):
-                os.mkdir(WORKING_DIRECTORY)    
+                os.mkdir(WORKING_DIRECTORY)
         except OSError:
             raise OSError(f"Cannot open or create working directory: {WORKING_DIRECTORY}")
 
@@ -194,15 +195,15 @@ class RTree:
         pass
 
     # gets node directly from file, based on id
-    def __get_node(self, node_id: int) -> Optional[Node]:
+    def get_node(self, node_id: int) -> Optional[Node]:
         node = self.cache.search(node_id)
-        if node != None:
+        if node is not None:
             return node
 
         node_object = self.tree_handler.get_node(node_id)
-        if node_object == None:
+        if node_object is None:
             raise Exception(f"Node {node_id} not found in tree file")
-        self.cache.store(node_id, node_object)
+        self.cache.store(node_object)
         return node_object
 
     # maybe change from *args to list, might be more memory efficient, idk
