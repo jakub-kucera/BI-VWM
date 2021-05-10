@@ -154,7 +154,7 @@ class RTree:
         pass
 
     # search for node in tree based on coordinates
-    def search_node(self, coordinates) -> DatabaseEntry:  # -> Node:  # maybe allow to return list of NOdes
+    def search_node(self, coordinates) -> DatabaseEntry:  # -> Node:  # maybe allow to return list of Nodes
         pass
 
     def search_rectangle(self, rectangle) -> List[DatabaseEntry]:
