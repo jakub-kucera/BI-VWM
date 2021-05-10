@@ -9,8 +9,6 @@ from rtree.node import Node
 from rtree.rtree import RTree
 
 from rtree import rtree, database_entry
-from rtree.node import Node
-from rtree.tree_file_handler import TreeFileHandler
 
 
 # def visualize(r_tree: RTree, output_img: str = "testing_img.svg"):
@@ -86,7 +84,7 @@ flag(marked as deleted), N * [min, max], (pickled) data
 """
 
 """
-todo suggestions: 
+todo suggestions:
 Database
 RTREE main functionality (high level stuff)
 Load from files RTree

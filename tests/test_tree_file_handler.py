@@ -20,7 +20,7 @@ def compare_tree_file_handler_dictionary(a_dict, b_dict):
     return (a_dict['filename'] == b_dict['filename'] and
             a_dict['dimensions'] == b_dict['dimensions'] and
             a_dict['node_size'] == b_dict['node_size'] and
-            a_dict['parameter_size'] == b_dict['parameter_size'] and
+            a_dict['parameters_size'] == b_dict['parameters_size'] and
             a_dict['id_size'] == b_dict['id_size'] and
             a_dict['null_node_id'] == b_dict['null_node_id'] and
             a_dict['node_flag_size'] == b_dict['node_flag_size'] and
@@ -31,6 +31,46 @@ def compare_tree_file_handler_dictionary(a_dict, b_dict):
             a_dict['unique_sequence'] == b_dict['unique_sequence'] and
             a_dict['config_hash'] == b_dict['config_hash'] and
             a_dict['filesize'] == b_dict['filesize'])  # not current position
+
+
+@pytest.mark.parametrize('rtree_args', [
+    {"dimensions": -5},
+    {"dimensions": 10000000000},
+    {"parameters_size": -5},
+    {"parameters_size": 10000000000},
+    {"id_size": -5},
+    {"id_size": 10000000000},
+    {"node_size": -5},
+    {"node_size": 10000000000},
+    {"tree_depth": -5},
+    {"tree_depth": 10000000000},
+    {"trunk_id": -5},
+    {"trunk_id": 100000000000000000000},
+    {"unique_sequence": -5},
+    {"unique_sequence": 10000},
+    {"config_hash": -5},
+    {"config_hash": 10000},
+    {"unique_sequence": b'\xf1\x97L\xc9\xe7\x1c\x98\x88\xf1\x97L\xc9\xe7\x1c\x98\x88\xe7\x1c\x98'},
+    {"unique_sequence": b'\xf1\x97L\xc9\xe7\x1c\x98\x88\xf1\x97L\xc9\xe7\x1c\x98\x88\xe7\x1c\x98\xe7\x1c'},
+    {"config_hash": b'\xf1\x97L\xc9\xe7\x1c\x98\x88\xf1\x97L\xc9\xe7\x1c\x98\x88\xe7\x1c\x98\xe7\x1c'},
+    {"config_hash": b'\xf1\x97L\xc9\xe7\x1c\x98\x88\xf1\x97L\xc9\xe7\x1c\x98\x88\xe7\x1c\x98'},  # wrong size
+    {"unique_sequence": 10000},
+])
+@pytest.mark.filterwarnings("ignore:")
+def test_create_handler_invalid(rtree_args):
+    try:
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
+    except FileNotFoundError:
+        pass
+
+    with pytest.raises(Exception):
+        tree_handler = TreeFileHandler(filename=TESTING_DIRECTORY + TREE_FILE_TEST,
+                                       **rtree_args)
+
+    try:
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
+    except FileNotFoundError:
+        pass
 
 
 @pytest.mark.parametrize('tree_file_handler_args, written_nodes', [

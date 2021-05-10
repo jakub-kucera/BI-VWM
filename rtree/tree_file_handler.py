@@ -22,7 +22,7 @@ class TreeFileHandler:
         self.filename = filename
         self.dimensions = dimensions
         self.node_size = node_size
-        self.parameter_size = parameters_size
+        self.parameters_size = parameters_size
         self.id_size = id_size
         self.null_node_id = NULL_NODE_ID
         self.node_flag_size = NODE_FLAG_SIZE
@@ -58,17 +58,17 @@ class TreeFileHandler:
         if save_header_to_file:
             self.write_header()
         else:
-            old_hash = self.config_hash
+            # old_hash = self.config_hash
             self.read_header()
-            if old_hash != self.config_hash:
-                raise ValueError(f"Saved tree has different configuration then the one specified in constructor.")
+            # if old_hash != self.config_hash:
+            #     raise ValueError(f"Saved tree has different configuration then the one specified in constructor.")
 
         # calculate remaining attributes
         self.children_per_node = int(
             (self.node_size - self.node_flag_size - (
-                    self.dimensions * self.parameter_size * 2)) / self.id_size)
+                    self.dimensions * self.parameters_size * 2)) / self.id_size)
         self.node_padding = self.node_size - (
-                self.node_flag_size + (self.dimensions * self.parameter_size * 2)
+                self.node_flag_size + (self.dimensions * self.parameters_size * 2)
                 + (self.children_per_node * self.id_size))
 
         # sets the maximum number of entries in the Node class
@@ -85,6 +85,9 @@ class TreeFileHandler:
                 calculated highest_id: {highest_id_check}""")
 
         self.current_position = self.offset_size + (self.highest_id + 1) * self.id_size
+
+        self.nodes_read_count = 0
+        self.nodes_written_count = 0
 
     def __del__(self):
         if not self.file.closed:
@@ -126,7 +129,7 @@ class TreeFileHandler:
             ('highest_id', self.id_size, True),
             ('null_node_id', self.id_size, True),
             ('trunk_id', self.id_size, False),
-            ('parameter_size', 1, False),
+            ('parameters_size', 1, False),
             ('tree_depth', 4, False),
         )
 
@@ -150,7 +153,7 @@ class TreeFileHandler:
             (self.highest_id, self.id_size, True),
             (self.null_node_id, self.id_size, True),
             (self.trunk_id, self.id_size, False),
-            (self.parameter_size, 1, False),
+            (self.parameters_size, 1, False),
             (self.tree_depth, 4, False)
         )
 
@@ -184,8 +187,8 @@ class TreeFileHandler:
         # reads the range in each dimension
         rectangle = []
         for _ in range(self.dimensions):  # todo maybe use float by default
-            low = int.from_bytes(self.file.read(self.parameter_size), byteorder=TREE_BYTEORDER, signed=True)
-            high = int.from_bytes(self.file.read(self.parameter_size), byteorder=TREE_BYTEORDER, signed=True)
+            low = int.from_bytes(self.file.read(self.parameters_size), byteorder=TREE_BYTEORDER, signed=True)
+            high = int.from_bytes(self.file.read(self.parameters_size), byteorder=TREE_BYTEORDER, signed=True)
             rectangle.append(MBBDim(low, high))
 
         # reads the ids of children nodes.
@@ -205,6 +208,7 @@ class TreeFileHandler:
         address = self.__get_node_address(node_id)
 
         self.file.seek(address, 0)
+        self.nodes_read_count += 1
         return self.__get_node_object()
 
     def get_next_node(self) -> Optional[Node]:
@@ -213,6 +217,7 @@ class TreeFileHandler:
             return None
 
         self.file.seek(address, 0)
+        self.nodes_read_count += 1
         return self.__get_node_object()
 
     def write_node(self, node: Node):
@@ -223,8 +228,8 @@ class TreeFileHandler:
         for one_dim in node.mbb.box:
             # for record in one_dimension:
             #     self.file.write(record.to_bytes(self.parameter_size, byteorder=TREE_BYTEORDER, signed=True))
-            self.file.write(one_dim.low.to_bytes(self.parameter_size, byteorder=TREE_BYTEORDER, signed=True))
-            self.file.write(one_dim.high.to_bytes(self.parameter_size, byteorder=TREE_BYTEORDER, signed=True))
+            self.file.write(one_dim.low.to_bytes(self.parameters_size, byteorder=TREE_BYTEORDER, signed=True))
+            self.file.write(one_dim.high.to_bytes(self.parameters_size, byteorder=TREE_BYTEORDER, signed=True))
 
         # write child nodes
         for child in node.entries:
@@ -243,6 +248,8 @@ class TreeFileHandler:
         self.__update_file_size()
         self.current_position = self.file.tell()
 
+        self.nodes_written_count += 1
+
         return node_id
 
     def insert_node(self, node: Node) -> int:
@@ -258,4 +265,5 @@ class TreeFileHandler:
     def update_node(self, node_id: int, node: Node):
         address = self.__get_node_address(node_id)
         self.file.seek(address, 0)
+        self.nodes_written_count += 1
         return self.write_node(node)
