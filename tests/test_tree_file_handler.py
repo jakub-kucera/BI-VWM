@@ -76,24 +76,26 @@ def test_create_handler_invalid(rtree_args):
 
 @pytest.mark.parametrize('tree_file_handler_args, written_nodes', [
     (
-            dict(filename=TREE_FILE_TEST, dimensions=2, node_size=1024),
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=2, node_size=1024),
             (
                     Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2], is_leaf=True),
-                    Node(node_id=1,mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    Node(node_id=1, mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             )
     ),
     (
-            dict(filename=TREE_FILE_TEST),
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST),
             (
                     Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
                     Node(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             )
     ),
     (
-            dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4,
+                 parameters_size=8, tree_depth=3,
                  trunk_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
             (
-                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))),
+                         entry_ids=[],
                          is_leaf=False),
                     Node(node_id=1, mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
                          entry_ids=[1, 2], is_leaf=True)
@@ -101,8 +103,8 @@ def test_create_handler_invalid(rtree_args):
     ),
 ])
 def test_write_read_node_one_handler(tree_file_handler_args, written_nodes):
-    if os.path.isfile(TREE_FILE_TEST):
-        os.remove(TREE_FILE_TEST)
+    if os.path.isfile(TESTING_DIRECTORY + TREE_FILE_TEST):
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
 
     tree_file_handler = TreeFileHandler(**tree_file_handler_args)
 
@@ -123,21 +125,22 @@ def test_write_read_node_one_handler(tree_file_handler_args, written_nodes):
 
     del tree_file_handler
 
-    if os.path.isfile(TREE_FILE_TEST):
-        os.remove(TREE_FILE_TEST)
+    if os.path.isfile(TESTING_DIRECTORY + TREE_FILE_TEST):
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
 
 
 @pytest.mark.parametrize('tree_file_handler_writer_args, written_nodes, tree_file_handler_reader_args', [
     (
-            dict(filename=TREE_FILE_TEST),
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST),
             (
                     Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
                     Node(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             ),
-            dict(filename=TREE_FILE_TEST)
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST)
     ),
     (
-            dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4,
+                 parameters_size=8, tree_depth=3,
                  trunk_id=5, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
             (
                     Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
@@ -145,15 +148,16 @@ def test_write_read_node_one_handler(tree_file_handler_args, written_nodes):
                     Node(node_id=1, mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
                          entry_ids=[1, 2], is_leaf=True)
             ),
-            dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4,
+                 parameters_size=8, tree_depth=3,
                  trunk_id=5, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash)
     ),
 ])
 def test_write_read_node_two_handler(tree_file_handler_writer_args,
                                      written_nodes: Tuple[Node, ...],
                                      tree_file_handler_reader_args):
-    if os.path.isfile(TREE_FILE_TEST):
-        os.remove(TREE_FILE_TEST)
+    if os.path.isfile(TESTING_DIRECTORY + TREE_FILE_TEST):
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
 
     tree_file_handler_writer = TreeFileHandler(**tree_file_handler_writer_args)
 
@@ -181,41 +185,44 @@ def test_write_read_node_two_handler(tree_file_handler_writer_args,
 
     del tree_file_handler_reader
 
-    if os.path.isfile(TREE_FILE_TEST):
-        os.remove(TREE_FILE_TEST)
+    if os.path.isfile(TESTING_DIRECTORY + TREE_FILE_TEST):
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
 
 
 @pytest.mark.parametrize('tree_file_handler_args, written_nodes', [
     (
-            dict(filename=TREE_FILE_TEST, dimensions=2, node_size=1024),
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=2, node_size=1024),
             (
                     Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2], is_leaf=True),
                     Node(node_id=1, mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             )
     ),
     (
-            dict(filename=TREE_FILE_TEST),
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST),
             (
                     Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
                     Node(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
             )
     ),
     (
-            dict(filename=TREE_FILE_TEST),
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST),
             (
                     Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
                     Node(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True),
                     Node(node_id=2, mbb=MBB((MBBDim(7, 6), MBBDim(4, 5))), entry_ids=[3, 4], is_leaf=False),
-                    Node(node_id=3, mbb=MBB((MBBDim(71, 623), MBBDim(49, 50))), entry_ids=[3, 4, 5, 3, 1], is_leaf=False),
+                    Node(node_id=3, mbb=MBB((MBBDim(71, 623), MBBDim(49, 50))), entry_ids=[3, 4, 5, 3, 1],
+                         is_leaf=False),
                     Node(node_id=4, mbb=MBB((MBBDim(-3, 0), MBBDim(-4, 3434))),
                          entry_ids=[323434, 43434, 5, 3, 1, 343, 1, 2, 3, 33, 123123, 234], is_leaf=False),
             )
     ),
     (
-            dict(filename=TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4, parameters_size=8, tree_depth=3,
+            dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4,
+                 parameters_size=8, tree_depth=3,
                  trunk_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
             (
-                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))), entry_ids=[],
+                    Node(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))),
+                         entry_ids=[],
                          is_leaf=False),
                     Node(node_id=1, mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
                          entry_ids=[1, 2], is_leaf=True)
@@ -223,8 +230,8 @@ def test_write_read_node_two_handler(tree_file_handler_writer_args,
     ),
 ])
 def test_write_update_nodes_swap(tree_file_handler_args, written_nodes):
-    if os.path.isfile(TREE_FILE_TEST):
-        os.remove(TREE_FILE_TEST)
+    if os.path.isfile(TESTING_DIRECTORY + TREE_FILE_TEST):
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
 
     tree_file_handler = TreeFileHandler(**tree_file_handler_args)
 
@@ -258,5 +265,5 @@ def test_write_update_nodes_swap(tree_file_handler_args, written_nodes):
 
     del tree_file_handler
 
-    if os.path.isfile(TREE_FILE_TEST):
-        os.remove(TREE_FILE_TEST)
+    if os.path.isfile(TESTING_DIRECTORY + TREE_FILE_TEST):
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
