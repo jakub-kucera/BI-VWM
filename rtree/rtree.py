@@ -3,7 +3,7 @@ import secrets
 from typing import List, Optional, Tuple
 import os
 from hashlib import sha1
-from psutil import cpu_count  # todo <- fix import
+from psutil import cpu_count
 
 from rtree.default_config import *
 from rtree.database import Database
@@ -12,9 +12,6 @@ from rtree.mbb import MBB
 from rtree.node import Node
 from rtree.cache import Cache
 from rtree.tree_file_handler import TreeFileHandler
-
-
-# maybe rename to Index, use rtree only as module name
 
 
 class RTree:
@@ -148,18 +145,17 @@ class RTree:
             # print("LOADING FROM FILES")
             self.config_hash = self.tree_handler.config_hash
             self.unique_sequence = self.tree_handler.unique_sequence
-            # self.children_per_node = self.tree_handler.children_per_node
             self.node_size = self.tree_handler.node_size
             self.dimensions = self.tree_handler.dimensions
             self.id_size = self.tree_handler.id_size
             self.trunk_id = self.tree_handler.trunk_id
             self.tree_depth = self.tree_handler.tree_depth
             self.parameters_size = self.tree_handler.parameters_size
-        # else:
-        #     trunk_node_new = Node.create_emtpy_node(self.dimensions, is_leaf=True)
-        #     self.trunk_id = self.tree_handler.write_node(trunk_node_new)
+        else:
+            trunk_node_new = Node.create_emtpy_node(self.dimensions, is_leaf=True)
+            self.trunk_id = self.tree_handler.write_node(trunk_node_new)
 
-        # database object (database.py)
+        # creates database file handler
         self.database = Database(filename=self.database_file, dimensions=self.dimensions,
                                  parameters_size=self.parameters_size,
                                  unique_sequence=self.unique_sequence, config_hash=self.config_hash)

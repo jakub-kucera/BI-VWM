@@ -5,8 +5,6 @@ from rtree.node import Node, MBBDim, MBB
 from rtree.default_config import *
 
 
-# todo add mutex. Lock/Unlock when calling get_node/insert_node
-
 class TreeFileHandler:
     def __init__(self,  # todo delete default values, always called from RTree with all args
                  filename: str = WORKING_DIRECTORY + DEFAULT_TREE_FILE,
@@ -40,28 +38,21 @@ class TreeFileHandler:
 
         # create file if not exists
         save_header_to_file = False
-        if not os.path.isfile(self.filename):  # todo maybe move to RTree
+        if not os.path.isfile(self.filename):
             save_header_to_file = True
             with open(self.filename, 'w+b'):
-                # creates files if not exists
                 pass
 
-        # open file
-        # self.file = 0
         try:
             self.file = open(self.filename, 'r+b')
         except IOError:
             raise IOError(f"File cannot be opened: {self.filename}")
-            # input(f"File cannot be opened: {self.filename}")
 
         # save/load config from file
         if save_header_to_file:
             self.write_header()
         else:
-            # old_hash = self.config_hash
             self.read_header()
-            # if old_hash != self.config_hash:
-            #     raise ValueError(f"Saved tree has different configuration then the one specified in constructor.")
 
         # calculate remaining attributes
         self.children_per_node = int(
