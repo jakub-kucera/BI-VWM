@@ -160,17 +160,17 @@ class RTree:
                                  parameters_size=self.parameters_size,
                                  unique_sequence=self.unique_sequence, config_hash=self.config_hash)
 
-        # if not load_from_files:
-        #     new_entry = DatabaseEntry([0 for coord in range(self.dimensions)],
-        #                               data="this is some data")
-        #     new_entry_id = self.database.create(new_entry)
-        #     trunk_node = self.tree_handler.get_node(self.trunk_id)
-        #     if trunk_node is None:
-        #         raise Exception("Trunk node not found")
-        #
-        #     trunk_node.insert_entry_from_entry(new_entry_id, new_entry)
-        #
-        #     self.tree_handler.update_node(self.trunk_id, trunk_node)
+        if not load_from_files:
+            new_entry = DatabaseEntry([0 for coord in range(self.dimensions)],
+                                      data="this is some data")
+            new_entry_id = self.database.create(new_entry)
+            trunk_node = self.tree_handler.get_node(self.trunk_id)
+            if trunk_node is None:
+                raise Exception("Trunk node not found")
+
+            trunk_node.insert_entry_from_entry(new_entry_id, new_entry)
+
+            self.tree_handler.update_node(self.trunk_id, trunk_node)
 
         # cache object (cache.py)
         self.cache = Cache(node_size=self.children_per_node, cache_nodes=CACHE_NODES)
@@ -191,7 +191,7 @@ class RTree:
         pass
 
     # gets node directly from file, based on id
-    def __get_node(self, node_id: int) -> Optional[RTreeNode]:
+    def get_node(self, node_id: int) -> Optional[RTreeNode]:
         cached_node = self.cache.search(node_id)
         if cached_node is not None:
             return cached_node

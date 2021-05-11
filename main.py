@@ -13,6 +13,12 @@ def delete_saved_rtree():
             os.remove(entry)
 
 
+# rtree 1102B
+# database 40B
+
+# rtree 1102B
+# database 81B
+
 if __name__ == '__main__':
     print("hello, friend")
     # print(cpu_count())

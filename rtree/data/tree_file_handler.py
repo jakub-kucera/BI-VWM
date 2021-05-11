@@ -69,6 +69,7 @@ class TreeFileHandler:
         self.__update_file_size()
 
         highest_id_check = int((self.filesize - self.offset_size) / self.node_size) - 1
+
         if highest_id_check != self.highest_id:
             raise Exception(
                 f"""Invalid TreeFileHandler config.)
@@ -212,7 +213,7 @@ class TreeFileHandler:
         self.nodes_read_count += 1
         return self.__get_node_object(None)
 
-    def write_node(self, node: RTreeNode):
+    def write_node(self, node: RTreeNode, update_only: bool = False):
         """Writes node on the current position of the file head."""
         flag = int(node.is_leaf)
         self.file.write(flag.to_bytes(self.node_flag_size, byteorder=TREE_BYTEORDER, signed=False))
@@ -235,7 +236,8 @@ class TreeFileHandler:
         self.file.write(int(0).to_bytes(self.node_padding, byteorder=TREE_BYTEORDER, signed=False))
 
         self.file.flush()
-        self.highest_id += 1
+        if not update_only:
+            self.highest_id += 1
         node_id = self.highest_id
         self.__update_file_size()
         self.current_position = self.file.tell()
@@ -258,4 +260,4 @@ class TreeFileHandler:
         address = self.__get_node_address(node_id)
         self.file.seek(address, 0)
         self.nodes_written_count += 1
-        return self.write_node(node)
+        return self.write_node(node, update_only=True)
