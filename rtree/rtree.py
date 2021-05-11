@@ -6,12 +6,11 @@ from hashlib import sha1
 from psutil import cpu_count
 
 from rtree.default_config import *
-from rtree.database import Database
-from rtree.database_entry import DatabaseEntry
-from rtree.mbb import MBB
-from rtree.rtree_node import RTreeNode
+from rtree.data.database import Database
+from rtree.data.database_entry import DatabaseEntry
+from rtree.data.rtree_node import RTreeNode
 from rtree.cache import Cache
-from rtree.tree_file_handler import TreeFileHandler
+from rtree.data.tree_file_handler import TreeFileHandler
 
 
 class RTree:

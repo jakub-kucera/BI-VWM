@@ -2,7 +2,7 @@ import os
 import pickle
 from typing import Optional, List, Tuple
 
-from rtree.database_entry import DatabaseEntry
+from rtree.data.database_entry import DatabaseEntry
 from rtree.default_config import *
 
 

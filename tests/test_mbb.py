@@ -1,6 +1,6 @@
 import pytest
 
-from rtree.mbb import MBB, MBBDim
+from rtree.data.mbb import MBB, MBBDim
 
 
 @pytest.mark.parametrize('mbb_dim, low, high, size', [

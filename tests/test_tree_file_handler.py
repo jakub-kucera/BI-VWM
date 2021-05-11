@@ -4,8 +4,8 @@ from typing import Tuple
 
 import pytest
 
-from rtree.rtree_node import RTreeNode, MBB, MBBDim
-from rtree.tree_file_handler import TreeFileHandler
+from rtree.data.rtree_node import RTreeNode, MBB, MBBDim
+from rtree.data.tree_file_handler import TreeFileHandler
 from rtree.default_config import *
 
 # testing_unique_sequence = b"\x00\xb0\x83\x82\x8c\x05\x7b\xc3\x38\x69\xff\xde\xed\xba\xd6\x02\x69\xd2\x80\x94"

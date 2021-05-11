@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from rtree.rtree_node import RTreeNode, MBBDim, MBB
+from rtree.data.rtree_node import RTreeNode, MBBDim, MBB
 from rtree.default_config import *
 
 

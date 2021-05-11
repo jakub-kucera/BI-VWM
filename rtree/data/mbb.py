@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Tuple, List
 
-from rtree.mbb_dim import MBBDim
+from rtree.data.mbb_dim import MBBDim
 
 
 class MBB:

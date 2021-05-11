@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from rtree.rtree_node import RTreeNode
+from rtree.data.rtree_node import RTreeNode
 from rtree.default_config import *
 
 

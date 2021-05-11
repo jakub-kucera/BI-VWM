@@ -1,7 +1,7 @@
 import os
 
-from rtree.database import Database
-from rtree.database_entry import DatabaseEntry
+from rtree.data.database import Database
+from rtree.data.database_entry import DatabaseEntry
 from rtree.default_config import WORKING_DIRECTORY, DEFAULT_DATABASE_FILE
 
 

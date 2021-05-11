@@ -1,4 +1,4 @@
-from rtree.mbb import MBBDim
+from rtree.data.mbb import MBBDim
 
 
 def test_mbbdim_1():

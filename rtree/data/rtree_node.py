@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import List, Tuple, Optional
 
-from rtree.database_entry import DatabaseEntry
-from rtree.mbb import MBBDim, MBB
+from rtree.data.database_entry import DatabaseEntry
+from rtree.data.mbb import MBBDim, MBB
 
 
 class RTreeNode:
