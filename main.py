@@ -23,12 +23,24 @@ if __name__ == '__main__':
     print("hello, friend")
     # print(cpu_count())
     tree = RTree()
-    print("tree.trunk_id")
-    print(tree.trunk_id)
-    print("tree.get_node(tree.trunk_id)")
-    print(tree.get_node(tree.trunk_id))
+    print("tree.root_id")
+    print(tree.root_id)
+    print("tree.get_node(tree.root_id)")
+    print(tree.get_node(tree.root_id))
     # visualize(r_tree=tree)
     # delete_saved_rtree()
+
+    # if not load_from_files:
+    #     new_entry = DatabaseEntry([0 for coord in range(self.dimensions)],
+    #                               data="this is some data")
+    #     new_entry_id = self.database.create(new_entry)
+    #     root_node = self.tree_handler.get_node(self.root_id)
+    #     if root_node is None:
+    #         raise Exception("root node not found")
+    #
+    #     root_node.insert_entry_from_entry(new_entry_id, new_entry)
+    #
+    #     self.tree_handler.update_node(self.root_id, root_node)
 
 """
 Non-leaf node:

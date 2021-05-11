@@ -31,7 +31,7 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
 
         if node.is_leaf:
             # gets ids of database entries
-            database_entries_addresses.extend(node.entries)
+            database_entries_addresses.extend(node.child_nodes)
             pass
         else:
             # Create a Rectangle and add it to plot

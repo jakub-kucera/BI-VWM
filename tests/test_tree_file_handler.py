@@ -44,8 +44,8 @@ def compare_tree_file_handler_dictionary(a_dict, b_dict):
     {"node_size": 10000000000},
     {"tree_depth": -5},
     {"tree_depth": 10000000000},
-    {"trunk_id": -5},
-    {"trunk_id": 100000000000000000000},
+    {"root_id": -5},
+    {"root_id": 100000000000000000000},
     {"unique_sequence": -5},
     {"unique_sequence": 10000},
     {"config_hash": -5},
@@ -78,30 +78,30 @@ def test_create_handler_invalid(rtree_args):
     (
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=2, node_size=1024),
             (
-                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2],
+                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), child_nodes=[5, 5, 2, 2, 2],
                               is_leaf=True),
-                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), child_nodes=[1, 2], is_leaf=True)
             )
     ),
     (
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST),
             (
-                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
-                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), child_nodes=[], is_leaf=False),
+                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), child_nodes=[1, 2], is_leaf=True)
             )
     ),
     (
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4,
                  parameters_size=8, tree_depth=3,
-                 trunk_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
+                 root_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
             (
                     RTreeNode(node_id=0,
                               mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))),
-                              entry_ids=[],
+                              child_nodes=[],
                               is_leaf=False),
                     RTreeNode(node_id=1,
                               mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
-                              entry_ids=[1, 2], is_leaf=True)
+                              child_nodes=[1, 2], is_leaf=True)
             )
     ),
 ])
@@ -136,27 +136,27 @@ def test_write_read_node_one_handler(tree_file_handler_args, written_nodes):
     (
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST),
             (
-                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
-                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), child_nodes=[], is_leaf=False),
+                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), child_nodes=[1, 2], is_leaf=True)
             ),
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST)
     ),
     (
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4,
                  parameters_size=8, tree_depth=3,
-                 trunk_id=5, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
+                 root_id=5, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
             (
                     RTreeNode(node_id=0,
                               mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))),
-                              entry_ids=[],
+                              child_nodes=[],
                               is_leaf=False),
                     RTreeNode(node_id=1,
                               mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
-                              entry_ids=[1, 2], is_leaf=True)
+                              child_nodes=[1, 2], is_leaf=True)
             ),
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4,
                  parameters_size=8, tree_depth=3,
-                 trunk_id=5, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash)
+                 root_id=5, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash)
     ),
 ])
 def test_write_read_node_two_handler(tree_file_handler_writer_args,
@@ -199,42 +199,42 @@ def test_write_read_node_two_handler(tree_file_handler_writer_args,
     (
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=2, node_size=1024),
             (
-                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[5, 5, 2, 2, 2],
+                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), child_nodes=[5, 5, 2, 2, 2],
                               is_leaf=True),
-                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 3), MBBDim(3, 2))), child_nodes=[1, 2], is_leaf=True)
             )
     ),
     (
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST),
             (
-                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
-                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True)
+                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), child_nodes=[], is_leaf=False),
+                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), child_nodes=[1, 2], is_leaf=True)
             )
     ),
     (
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST),
             (
-                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), entry_ids=[], is_leaf=False),
-                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), entry_ids=[1, 2], is_leaf=True),
-                    RTreeNode(node_id=2, mbb=MBB((MBBDim(7, 6), MBBDim(4, 5))), entry_ids=[3, 4], is_leaf=False),
-                    RTreeNode(node_id=3, mbb=MBB((MBBDim(71, 623), MBBDim(49, 50))), entry_ids=[3, 4, 5, 3, 1],
+                    RTreeNode(node_id=0, mbb=MBB((MBBDim(1, 1), MBBDim(2, 2))), child_nodes=[], is_leaf=False),
+                    RTreeNode(node_id=1, mbb=MBB((MBBDim(5, 4), MBBDim(3, 2))), child_nodes=[1, 2], is_leaf=True),
+                    RTreeNode(node_id=2, mbb=MBB((MBBDim(7, 6), MBBDim(4, 5))), child_nodes=[3, 4], is_leaf=False),
+                    RTreeNode(node_id=3, mbb=MBB((MBBDim(71, 623), MBBDim(49, 50))), child_nodes=[3, 4, 5, 3, 1],
                               is_leaf=False),
                     RTreeNode(node_id=4, mbb=MBB((MBBDim(-3, 0), MBBDim(-4, 3434))),
-                              entry_ids=[323434, 43434, 5, 3, 1, 343, 1, 2, 3, 33, 123123, 234], is_leaf=False),
+                              child_nodes=[323434, 43434, 5, 3, 1, 343, 1, 2, 3, 33, 123123, 234], is_leaf=False),
             )
     ),
     (
             dict(filename=TESTING_DIRECTORY + TREE_FILE_TEST, dimensions=5, node_size=4 * 1024, id_size=4,
                  parameters_size=8, tree_depth=3,
-                 trunk_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
+                 root_id=10, unique_sequence=testing_unique_sequence, config_hash=testing_config_hash),
             (
                     RTreeNode(node_id=0,
                               mbb=MBB((MBBDim(1, 1), MBBDim(2, 2), MBBDim(3, 3), MBBDim(4, 4), MBBDim(5, 5))),
-                              entry_ids=[],
+                              child_nodes=[],
                               is_leaf=False),
                     RTreeNode(node_id=1,
                               mbb=MBB((MBBDim(9, 8), MBBDim(7, 6), MBBDim(5, 4), MBBDim(3, 2), MBBDim(1, 0))),
-                              entry_ids=[1, 2], is_leaf=True)
+                              child_nodes=[1, 2], is_leaf=True)
             )
     ),
 ])
@@ -268,7 +268,7 @@ def test_write_update_nodes_swap(tree_file_handler_args, written_nodes):
 
     for written, read in zip(written_nodes[::-1], updated_nodes):
         assert written.mbb == read.mbb
-        assert written.entries == read.entries
+        assert written.child_nodes == read.child_nodes
         assert written.is_leaf == read.is_leaf
         # assert written.__dict__ == read.__dict__
 

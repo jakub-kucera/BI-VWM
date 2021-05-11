@@ -43,23 +43,24 @@ class MBB:
                 return False
         return True
 
-    def insert_entry(self, new_entry: Tuple[MBBDim, ...]):
+    def insert_mbb(self, new_mbb: Tuple[MBBDim, ...]):
         """Inserts a new entry (Child node) into"""
         new_box: Tuple[MBBDim, ...] = ()
-        for new_entry_dim, old_box_dim in zip(new_entry, self.box):
+        for new_entry_dim, old_box_dim in zip(new_mbb, self.box):
             new_box += (MBBDim(min(new_entry_dim.low, old_box_dim.low), (max(new_entry_dim.high, old_box_dim.high))),)
 
         self.box = new_box
         self.size = self.get_size(self.box)
 
-    # todo also check overlap between different MBBs
-
-    def size_increase_insert(self, new_entry: Tuple[MBBDim, ...]):
+    def size_increase_insert(self, new_mbb: Tuple[MBBDim, ...]):
         """Calculates size of MBB if a new entry were to be inserted"""
+
+        # todo fix for when area is 0. Maybe use length, or fake smth, or different metric
+
         old_size = self.size
         new_mmb = MBB(self.box)
 
-        new_mmb.insert_entry(new_entry)
+        new_mmb.insert_mbb(new_mbb)
         new_size = new_mmb.size
 
         return new_size - old_size
