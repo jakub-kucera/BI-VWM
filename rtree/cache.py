@@ -17,7 +17,7 @@ class Cache:
     def __str__(self):
         return str(self.__dict__)
 
-    def __hashIn(self, data: int) -> int:
+    def __hash_in(self, data: int) -> int:
         return data % self.cache_size
 
     # def __is_free(self, node_id: int) -> bool:
@@ -32,7 +32,7 @@ class Cache:
     #     return node if node.id == node_id else None
 
     def search(self, node_id: int) -> Optional[RTreeNode]:
-        hashed = self.__hashIn(node_id)
+        hashed = self.__hash_in(node_id)
         cache_for_hashed = self.memory[hashed]
 
         if cache_for_hashed is None:
@@ -44,5 +44,5 @@ class Cache:
         if new_node.id is None:
             raise Exception("Cannot call cache store on Node with no ID")
 
-        hashed = self.__hashIn(new_node.id)
+        hashed = self.__hash_in(new_node.id)
         self.memory[hashed] = new_node
