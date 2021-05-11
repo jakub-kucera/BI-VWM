@@ -160,17 +160,17 @@ class RTree:
                                  parameters_size=self.parameters_size,
                                  unique_sequence=self.unique_sequence, config_hash=self.config_hash)
 
-        if not load_from_files:
-            new_entry = DatabaseEntry([0 for coord in range(self.dimensions)],
-                                      data="this is some data")
-            new_entry_id = self.database.create(new_entry)
-            trunk_node = self.tree_handler.get_node(self.trunk_id)
-            if trunk_node is None:
-                raise Exception("Trunk node not found")
-
-            trunk_node.insert_entry_from_entry(new_entry_id, new_entry)
-
-            self.tree_handler.update_node(self.trunk_id, trunk_node)
+        # if not load_from_files:
+        #     new_entry = DatabaseEntry([0 for coord in range(self.dimensions)],
+        #                               data="this is some data")
+        #     new_entry_id = self.database.create(new_entry)
+        #     trunk_node = self.tree_handler.get_node(self.trunk_id)
+        #     if trunk_node is None:
+        #         raise Exception("Trunk node not found")
+        #
+        #     trunk_node.insert_entry_from_entry(new_entry_id, new_entry)
+        #
+        #     self.tree_handler.update_node(self.trunk_id, trunk_node)
 
         # cache object (cache.py)
         self.cache = Cache(node_size=self.children_per_node, cache_nodes=CACHE_NODES)
@@ -202,9 +202,22 @@ class RTree:
         self.cache.store(node)
         return node
 
-    # maybe change from *args to list, might be more memory efficient, idk
-    def insert_entry(self, *entries: List[DatabaseEntry]):
-        # for entry in entries:
+    # https://www2.cs.sfu.ca/CourseCentral/454/jpei/slides/R-Tree.pdf
+    def rec_search_insert(self):
+
+        pass
+        # find all suitable child nodes - already containing entry (sorted by minimal MBB size) by the least expanded area
+        # try call on best child, and
+        # if returned unsuccesfully try next best child
+
+        # splitting minimum fill, (best 30-40%)
+
+        # return status_code, ok, dont use, full make new node
+        # if returned full, and node_id == trunk_id, increase tree_depth
+
+    # def insert_entry(self, entries: List[DatabaseEntry]):
+    def insert_entry(self, entry: DatabaseEntry):
+
         pass
 
     def __too_many_deleted_entries(self):
