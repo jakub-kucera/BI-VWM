@@ -1,0 +1,13 @@
+name: rtree
+channels:
+  - conda-forge
+dependencies:
+  - python=>3.8
+  - matplotlib
+  - pytest
+  - numpy
+  - psutil
+  - Pillow
+  - pylint
+  - mypy
+  - flake8

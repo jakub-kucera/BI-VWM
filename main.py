@@ -7,13 +7,12 @@ from matplotlib import pyplot as plt, patches
 
 from rtree.default_config import WORKING_DIRECTORY
 from rtree.mbb import MBBDim, MBB
-from rtree.node import Node
+from rtree.rtree_node import RTreeNode
 from rtree.rtree import RTree
 
 from rtree import rtree, database_entry
 
 
-# def visualize(r_tree: RTree, output_img: str = "testing_img.svg"):
 def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
     """Creates and image which visualizes the rtree nodes and database entries."""
 
@@ -86,7 +85,7 @@ if __name__ == '__main__':
     print("tree.get_node(tree.trunk_id)")
     print(tree.get_node(tree.trunk_id))
     # visualize(r_tree=tree)
-    delete_saved_rtree()
+    # delete_saved_rtree()
 
 """
 Non-leaf node:

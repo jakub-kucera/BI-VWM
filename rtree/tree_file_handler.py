@@ -1,11 +1,9 @@
 import os
 from typing import Optional
 
-from rtree.node import Node, MBBDim, MBB
+from rtree.rtree_node import RTreeNode, MBBDim, MBB
 from rtree.default_config import *
 
-
-# todo add mutex. Lock/Unlock when calling get_node/insert_node
 
 class TreeFileHandler:
     def __init__(self,  # todo delete default values, always called from RTree with all args
@@ -40,28 +38,21 @@ class TreeFileHandler:
 
         # create file if not exists
         save_header_to_file = False
-        if not os.path.isfile(self.filename):  # todo maybe move to RTree
+        if not os.path.isfile(self.filename):
             save_header_to_file = True
             with open(self.filename, 'w+b'):
-                # creates files if not exists
                 pass
 
-        # open file
-        # self.file = 0
         try:
             self.file = open(self.filename, 'r+b')
         except IOError:
             raise IOError(f"File cannot be opened: {self.filename}")
-            # input(f"File cannot be opened: {self.filename}")
 
         # save/load config from file
         if save_header_to_file:
             self.write_header()
         else:
-            # old_hash = self.config_hash
             self.read_header()
-            # if old_hash != self.config_hash:
-            #     raise ValueError(f"Saved tree has different configuration then the one specified in constructor.")
 
         # calculate remaining attributes
         self.children_per_node = int(
@@ -72,7 +63,7 @@ class TreeFileHandler:
                 + (self.children_per_node * self.id_size))
 
         # sets the maximum number of entries in the Node class
-        Node.max_entries_count = self.children_per_node
+        RTreeNode.max_entries_count = self.children_per_node
 
         self.filesize = 0
         self.__update_file_size()
@@ -178,7 +169,7 @@ class TreeFileHandler:
         self.current_position = self.current_position + self.node_size
         return old_position
 
-    def __get_node_object(self, node_id: Optional[int]) -> Node:
+    def __get_node_object(self, node_id: Optional[int]) -> RTreeNode:
 
         # read flag, that determines whether the node is a leaf
         is_leaf = bool(bool.from_bytes(self.file.read(self.node_flag_size), byteorder=TREE_BYTEORDER, signed=False))
@@ -200,9 +191,9 @@ class TreeFileHandler:
             # else:
             #     break
 
-        return Node(node_id=node_id, mbb=MBB(tuple(rectangle)), entry_ids=child_nodes, is_leaf=is_leaf)
+        return RTreeNode(node_id=node_id, mbb=MBB(tuple(rectangle)), entry_ids=child_nodes, is_leaf=is_leaf)
 
-    def get_node(self, node_id: int) -> Optional[Node]:
+    def get_node(self, node_id: int) -> Optional[RTreeNode]:
         if node_id > self.highest_id:
             return None
         address = self.__get_node_address(node_id)
@@ -212,7 +203,7 @@ class TreeFileHandler:
         return self.__get_node_object(node_id)
 
     # probably deprecated
-    def get_next_node(self) -> Optional[Node]:
+    def get_next_node(self) -> Optional[RTreeNode]:
         address = self.__get_next_node_address()
         if self.current_position >= self.filesize:
             return None
@@ -221,7 +212,7 @@ class TreeFileHandler:
         self.nodes_read_count += 1
         return self.__get_node_object(None)
 
-    def write_node(self, node: Node):
+    def write_node(self, node: RTreeNode):
         """Writes node on the current position of the file head."""
         flag = int(node.is_leaf)
         self.file.write(flag.to_bytes(self.node_flag_size, byteorder=TREE_BYTEORDER, signed=False))
@@ -253,7 +244,7 @@ class TreeFileHandler:
 
         return node_id
 
-    def insert_node(self, node: Node) -> int:
+    def insert_node(self, node: RTreeNode) -> int:
         """Writes node on the current position of the file head."""
         # moves the file handle to the end of file
         self.file.seek(0, 2)
@@ -263,7 +254,7 @@ class TreeFileHandler:
         self.tree_depth = tree_depth
         # write_header()
 
-    def update_node(self, node_id: int, node: Node):
+    def update_node(self, node_id: int, node: RTreeNode):
         address = self.__get_node_address(node_id)
         self.file.seek(address, 0)
         self.nodes_written_count += 1
