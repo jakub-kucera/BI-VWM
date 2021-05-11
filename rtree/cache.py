@@ -1,5 +1,3 @@
-import os
-from math import floor
 from typing import Optional, List
 
 from rtree.rtree_node import RTreeNode
