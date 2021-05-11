@@ -2,7 +2,7 @@ import os
 from math import floor
 from typing import Optional, List
 
-from rtree.node import Node
+from rtree.rtree_node import RTreeNode
 from rtree.default_config import *
 
 
@@ -14,7 +14,7 @@ class Cache:
         self.cache_nodes = cache_nodes
 
         self.cache_size = self.cache_nodes * self.node_size
-        self.memory: List[Optional[Node]] = [None] * self.cache_size
+        self.memory: List[Optional[RTreeNode]] = [None] * self.cache_size
 
     def __str__(self):
         return str(self.__dict__)
@@ -33,7 +33,7 @@ class Cache:
     #     node = self.memory[hashed]
     #     return node if node.id == node_id else None
 
-    def search(self, node_id: int) -> Optional[Node]:
+    def search(self, node_id: int) -> Optional[RTreeNode]:
         hashed = self.__hashIn(node_id)
         cache_for_hashed = self.memory[hashed]
 
@@ -42,7 +42,7 @@ class Cache:
 
         return cache_for_hashed if cache_for_hashed.id == node_id else None
 
-    def store(self, new_node: Node):
+    def store(self, new_node: RTreeNode):
         if new_node.id is None:
             raise Exception("Cannot call cache store on Node with no ID")
 

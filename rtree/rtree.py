@@ -9,7 +9,7 @@ from rtree.default_config import *
 from rtree.database import Database
 from rtree.database_entry import DatabaseEntry
 from rtree.mbb import MBB
-from rtree.node import Node
+from rtree.rtree_node import RTreeNode
 from rtree.cache import Cache
 from rtree.tree_file_handler import TreeFileHandler
 
@@ -95,12 +95,13 @@ class RTree:
                  max_threads: int = None):
 
         # path to binary file with saved tree / already opened file object
-        self.tree_file = working_directory + tree_file
-        self.database_file = working_directory + database_file
+        self.tree_filename = working_directory + tree_file
+        self.database_filename = working_directory + database_file
 
         # checks if files exists and are valid.
-        load_from_files = self.check_files_load_existing_rtree(tree_file=self.tree_file,
-                                                               database_file=self.database_file, override=override_file)
+        load_from_files = self.check_files_load_existing_rtree(tree_file=self.tree_filename,
+                                                               database_file=self.database_filename,
+                                                               override=override_file)
 
         # number of parameters used to index entries
         self.dimensions = dimensions
@@ -114,9 +115,10 @@ class RTree:
         # size of memory in Bytes to store one tree node
         self.node_size = node_size
 
+        # id of trunk node
         self.trunk_id = 0
 
-        # tree depth (start from 0 or 1?)
+        # tree depth todo (start from 0 or 1?)
         self.depth = 0
 
         self.deleted_db_entries_counter = 0
@@ -127,13 +129,12 @@ class RTree:
         # Generate an hash based on RTree parameters
         self.config_hash = self.calculate_config_hash(
             [self.dimensions, self.node_size, self.id_size, self.parameters_size])
-        print(self.config_hash)
 
-        # Number of threads that can be used
+        # Number of threads that can be used # todo delete?
         self.max_threads = cpu_count() if max_threads is None else max_threads
 
         # object that directly interacts with a file where the rtree is stored
-        self.tree_handler = TreeFileHandler(filename=self.tree_file, dimensions=self.dimensions,
+        self.tree_handler = TreeFileHandler(filename=self.tree_filename, dimensions=self.dimensions,
                                             node_size=self.node_size, id_size=self.id_size, tree_depth=self.depth,
                                             parameters_size=self.parameters_size, trunk_id=self.trunk_id,
                                             unique_sequence=self.unique_sequence, config_hash=self.config_hash)
@@ -152,11 +153,11 @@ class RTree:
             self.tree_depth = self.tree_handler.tree_depth
             self.parameters_size = self.tree_handler.parameters_size
         else:
-            trunk_node_new = Node.create_emtpy_node(self.dimensions, is_leaf=True)
+            trunk_node_new = RTreeNode.create_emtpy_node(self.dimensions, is_leaf=True)
             self.trunk_id = self.tree_handler.write_node(trunk_node_new)
 
         # creates database file handler
-        self.database = Database(filename=self.database_file, dimensions=self.dimensions,
+        self.database = Database(filename=self.database_filename, dimensions=self.dimensions,
                                  parameters_size=self.parameters_size,
                                  unique_sequence=self.unique_sequence, config_hash=self.config_hash)
 
@@ -191,16 +192,16 @@ class RTree:
         pass
 
     # gets node directly from file, based on id
-    def get_node(self, node_id: int) -> Optional[Node]:
-        node = self.cache.search(node_id)
-        if node is not None:
-            return node
+    def __get_node(self, node_id: int) -> Optional[RTreeNode]:
+        cached_node = self.cache.search(node_id)
+        if cached_node is not None:
+            return cached_node
 
-        node_object = self.tree_handler.get_node(node_id)
-        if node_object is None:
+        node = self.tree_handler.get_node(node_id)
+        if node is None:
             raise Exception(f"Node {node_id} not found in tree file")
-        self.cache.store(node_object)
-        return node_object
+        self.cache.store(node)
+        return node
 
     # maybe change from *args to list, might be more memory efficient, idk
     def insert_entry(self, *entries: List[DatabaseEntry]):
