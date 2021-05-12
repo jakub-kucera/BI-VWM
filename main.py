@@ -26,7 +26,7 @@ if __name__ == '__main__':
     print("tree.root_id")
     print(tree.root_id)
     print("tree.get_node(tree.root_id)")
-    print(tree.get_node(tree.root_id))
+    print(tree._RTree__get_node(tree.root_id))
     # visualize(r_tree=tree)
     # delete_saved_rtree()
 

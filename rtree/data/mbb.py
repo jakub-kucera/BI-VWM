@@ -18,9 +18,9 @@ class MBB:
         return size
 
     @staticmethod
-    def create_box_from_entry_list(coordinates: List[int]):
+    def create_box_from_entry_list(coordinates: List[int]) -> MBB:
         """Creates MBB from database entry coordinates (1D list)"""
-        MBB(tuple(MBBDim(coord, coord) for coord in coordinates))
+        return MBB(tuple(MBBDim(coord, coord) for coord in coordinates))
 
     def __init__(self, dimensions: Tuple[MBBDim, ...]):
         self.box = dimensions

@@ -3,10 +3,12 @@ import secrets
 import sys
 from typing import List, Optional, Tuple
 import os
+import math
 from hashlib import sha1
 from psutil import cpu_count
 
 from rtree.data.mbb import MBB
+from rtree.data.mbb_dim import MBBDim
 from rtree.default_config import *
 from rtree.data.database import Database
 from rtree.data.database_entry import DatabaseEntry
@@ -182,16 +184,19 @@ class RTree:
                 if coordinates.contains_inner(entry.get_mbb()):
                     return entry
         else:
-            for child in node.child_nodes:
-                child_node = self.get_node(child)
+            for child_id in node.child_nodes:
+                child_node = self.__get_node(child_id)
+                if child_node is None:
+                    raise Exception("Child node cannot be None")
                 if child_node.mbb.contains_inner(coordinates):
                     return self.__rec_search_node(coordinates, child_node)
+        return None
 
     # single point in N dimensions
     def search_node(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
         # todo visited nodes counter. Same for other searches
         check_mbb = MBB.create_box_from_entry_list(coordinates)
-        root_node = self.get_node(self.root_id)
+        root_node = self.__get_node(self.root_id)
         if root_node is None:
             raise Exception("Root node cannot be None")
 
@@ -206,15 +211,19 @@ class RTree:
                     carry.append(entry)
         else:
             for child in node.child_nodes:
-                child_node = self.get_node(child)
+                child_node = self.__get_node(child)
+                if child_node is None:
+                    raise Exception("Child node cannot be None")
                 if child_node.mbb.contains_inner(coordinates):
                     self.__rec_search_rectangle(coordinates, child_node, carry)
 
     # area defined by two points in N dimensions
     def search_rectangle(self, coordinates_min: List[int], coordinates_max: List[int]) -> List[DatabaseEntry]:
         check_mbb = MBB.create_box_from_entry_list(coordinates_min)
-        check_mbb.insert_mbb(coordinates_max)
-        root_node = self.get_node(self.root_id)
+        max_mbb = MBB.create_box_from_entry_list(coordinates_max)
+        check_mbb.insert_mbb(max_mbb.box)
+
+        root_node = self.__get_node(self.root_id)
         if root_node is None:
             raise Exception("Root node cannot be None")
 
@@ -223,7 +232,7 @@ class RTree:
         self.__rec_search_rectangle(check_mbb, root_node, matching)
         return matching
 
-    def search_nearest_k_neighbours(self, k: int, coordinates: List[int]) -> List[DatabaseEntry]:
+    def search_k_nearest_neighbours(self, k: int, coordinates: List[int]) -> List[DatabaseEntry]:
         # if k > all DatabaseEntries: raise Exception
         #
         # search for matching leaf_node
@@ -233,7 +242,7 @@ class RTree:
         pass
 
     # gets node directly from file, based on id
-    def get_node(self, node_id: int) -> Optional[RTreeNode]:
+    def __get_node(self, node_id: int) -> Optional[RTreeNode]:
         cached_node = self.cache.search(node_id)
         if cached_node is not None:
             return cached_node
@@ -255,7 +264,7 @@ class RTree:
         minimum_size_value: Optional[int] = maxsize
 
         for child_id in node.child_nodes:
-            child = self.get_node(child_id)
+            child = self.__get_node(child_id)
             if child is None:
                 raise Exception("Node cannot be None")
             if child.mbb.contains_inner(entry_mmb):
@@ -270,7 +279,7 @@ class RTree:
         minimum_expansion_node: Optional[RTreeNode] = None
         minimum_expansion_value: Optional[int] = maxsize
         for child_id in node.child_nodes:
-            child = self.get_node(child_id)
+            child = self.__get_node(child_id)
             if child is None:
                 raise Exception("Child node cannot be None")
 
@@ -299,7 +308,7 @@ class RTree:
             raise Exception("Node id cannot be None")
 
         for child_node_id in node.child_nodes:
-            child_node = self.get_node(child_node_id)
+            child_node = self.__get_node(child_node_id)
 
             if child_node is None:
                 raise Exception("Child node cannot be None")
@@ -328,7 +337,7 @@ class RTree:
 
         # update parent ids of child nodes of seed_node_2
         for child_node_id in seed_node_2.child_nodes:
-            child_node = self.get_node(child_node_id)
+            child_node = self.__get_node(child_node_id)
 
             if child_node is None:
                 raise Exception("Child node cannot be None")
@@ -351,13 +360,13 @@ class RTree:
         self.tree_handler.update_node(parent_node.parent_id, parent_node)
 
     def rec_split_node(self, node_id: int):
-        node = self.get_node(node_id)
+        node = self.__get_node(node_id)
         if node is None:
             raise Exception("split node cannot be None")
         if node.parent_id is None:
             raise Exception("split node parent id cannot be None")
 
-        parent_node = self.get_node(node.parent_id)
+        parent_node = self.__get_node(node.parent_id)
         if parent_node is None:
             raise Exception("Parent node cannot be None")
         if parent_node.id is None:
