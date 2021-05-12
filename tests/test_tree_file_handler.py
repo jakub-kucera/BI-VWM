@@ -64,13 +64,12 @@ def test_create_handler_invalid(rtree_args):
         pass
 
     with pytest.raises(Exception):
-        tree_handler = TreeFileHandler(filename=TESTING_DIRECTORY + TREE_FILE_TEST,
-                                       **rtree_args)
+        tree_handler = TreeFileHandler(filename=TESTING_DIRECTORY + TREE_FILE_TEST, **rtree_args)
         del tree_handler
 
     try:
         os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
-    except FileNotFoundError:
+    except Exception:
         pass
 
 

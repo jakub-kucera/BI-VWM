@@ -31,9 +31,12 @@ def test_tree_create_invalid(rtree_args):
                      **rtree_args)
 
     try:
-        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
         os.remove(TESTING_DIRECTORY + DATABASE_FILE_TEST)
-    except FileNotFoundError:
+    except Exception:
+        pass
+    try:
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
+    except Exception:
         pass
 
 
