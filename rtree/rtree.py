@@ -175,16 +175,61 @@ class RTree:
     def __del__(self):
         pass
 
-    # search for node in tree based on coordinates
-    def search_node(self, coordinates) \
-            -> Tuple[DatabaseEntry, int, int]:  # -> Node:  # maybe allow to return list of NOdes
+    def __rec_search_node(self, coordinates: MBB, node: RTreeNode) -> Optional[DatabaseEntry]:
+        if node.is_leaf:
+            for entry_position in node.child_nodes:
+                entry = self.database.search(entry_position)
+                if coordinates.contains_inner(entry.get_mbb()):
+                    return entry
+        else:
+            for child in node.child_nodes:
+                child_node = self.get_node(child)
+                if child_node.mbb.contains_inner(coordinates):
+                    return self.__rec_search_node(coordinates, child_node)
+
+    # single point in N dimensions
+    def search_node(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
         # todo visited nodes counter. Same for other searches
-        pass
+        check_mbb = MBB.create_box_from_entry_list(coordinates)
+        root_node = self.get_node(self.root_id)
+        if root_node is None:
+            raise Exception("Root node cannot be None")
 
-    def search_rectangle(self, rectangle) -> List[DatabaseEntry]:
-        pass
+        # recursively check all children from root down for matching coordinates
+        return self.__rec_search_node(check_mbb, root_node)
 
-    def search_nearest_k_neighbours(self, database_entry: DatabaseEntry, k: int) -> List[DatabaseEntry]:
+    def __rec_search_rectangle(self, coordinates: MBB, node: RTreeNode, carry: List[DatabaseEntry]):
+        if node.is_leaf:
+            for entry_position in node.child_nodes:
+                entry = self.database.search(entry_position)
+                if coordinates.contains_inner(entry.get_mbb()):
+                    carry.append(entry)
+        else:
+            for child in node.child_nodes:
+                child_node = self.get_node(child)
+                if child_node.mbb.contains_inner(coordinates):
+                    self.__rec_search_rectangle(coordinates, child_node, carry)
+
+    # area defined by two points in N dimensions
+    def search_rectangle(self, coordinates_min: List[int], coordinates_max: List[int]) -> List[DatabaseEntry]:
+        check_mbb = MBB.create_box_from_entry_list(coordinates_min)
+        check_mbb.insert_mbb(coordinates_max)
+        root_node = self.get_node(self.root_id)
+        if root_node is None:
+            raise Exception("Root node cannot be None")
+
+        # recursively check all children from root down for matching coordinates
+        matching: List[DatabaseEntry] = []
+        self.__rec_search_rectangle(check_mbb, root_node, matching)
+        return matching
+
+    def search_nearest_k_neighbours(self, k: int, coordinates: List[int]) -> List[DatabaseEntry]:
+        # if k > all DatabaseEntries: raise Exception
+        #
+        # search for matching leaf_node
+        # sort all child_nodes (DatabaseEntries) and select k of them
+        #   if more than k is available, goto parent and select closest leaf_nodes
+        #   sort all closely surrounding DatabaseEntries to select the rest to k
         pass
 
     # gets node directly from file, based on id
@@ -344,7 +389,6 @@ class RTree:
 
     # def insert_entry(self, entries: List[DatabaseEntry]):
     def insert_entry(self, entry: DatabaseEntry):
-
         pass
 
     def __too_many_deleted_entries(self):
