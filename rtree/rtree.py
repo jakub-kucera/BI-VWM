@@ -268,7 +268,8 @@ class RTree:
             if child is None:
                 raise Exception("Node cannot be None")
             if child.mbb.contains_inner(entry_mmb):
-                size = child.mbb.size()
+                # print("calling mbb")
+                size = child.mbb.size
                 if size < minimum_size_value:
                     minimum_size_value = size
                     minimum_size_node = child
@@ -299,7 +300,7 @@ class RTree:
         # return status_code, ok, dont use, full make new node
         # if returned full, and node_id == root_id, increase tree_depth
 
-    def execute_split(self, node: RTreeNode, parent_node: RTreeNode):
+    def execute_split_old(self, node: RTreeNode, parent_node: RTreeNode):
         seed_node_1, seed_node_2 = node.get_seed_split_nodes()
 
         if node is None:
@@ -372,7 +373,7 @@ class RTree:
         # save parent_node
         self.tree_handler.update_node(parent_node.parent_id, parent_node)
 
-    def rec_split_node(self, node_id: int):
+    def rec_split_node_old(self, node_id: int):
         node = self.__get_node(node_id)
         if node is None:
             raise Exception("split node cannot be None")
@@ -387,7 +388,8 @@ class RTree:
 
         if parent_node.is_full():
             if parent_node.id == self.root_id:
-                new_root = RTreeNode.create_empty_node(self.dimensions, is_leaf=parent_node.is_leaf)  # todo change <==
+                # new_root = RTreeNode.create_empty_node(self.dimensions, is_leaf=parent_node.is_leaf)  # todo change <==
+                new_root = RTreeNode.create_empty_node(self.dimensions, is_leaf=False)  # todo change <==
                 new_root.mbb.insert_mbb(parent_node.mbb.box)
                 new_root.insert_box(parent_node.id, parent_node.mbb.box)
                 # new_root.insert_node_from_node(parent_node.id, parent_node)
