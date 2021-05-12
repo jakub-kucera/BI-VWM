@@ -30,8 +30,8 @@ if __name__ == '__main__':
     x, y = -1, -1
     total_insert_count = 0
     try:
-        for y in range(0, 30):
-            for x in range(0, 100):
+        for y in range(0, 200):
+            for x in range(0, 200):
                 total_insert_count += 1
                 tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
 
