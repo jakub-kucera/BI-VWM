@@ -158,7 +158,7 @@ class RTree:
             root_node_new = RTreeNode.create_empty_node(self.dimensions, is_leaf=True, parent_id=0)
             self.root_id = self.tree_handler.create_node(root_node_new)
             if self.root_id != 0:
-                raise Exception("Root id in new file is not 0")
+                raise Exception(f"Root id in new file is {self.root_id}, but should be 0")
             # root_node_new.parent_id = self.root_id
             # root_id_check = self.tree_handler.update_node(self.root_id, root_node_new)
             # if root_id_check != self.root_id:

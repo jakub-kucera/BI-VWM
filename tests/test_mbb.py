@@ -76,7 +76,7 @@ def test_mbb_size_increase_insert(mbb_old, new_box, diff):
     (MBB((MBBDim(5, 10), MBBDim(11, 25))), (MBBDim(-100, 200), MBBDim(2, 50)), MBB((MBBDim(-100, 200), MBBDim(2, 50)))),
 ])
 def test_mbb_insert(mbb_old, box_new, mbb_new):
-    mbb_old.insert_mbb(new_entry=box_new)
+    mbb_old.insert_mbb(new_mbb=box_new)
     assert mbb_old == mbb_new
-    mbb_new.insert_mbb(new_entry=box_new)
+    mbb_new.insert_mbb(new_mbb=box_new)
     assert mbb_old == mbb_new

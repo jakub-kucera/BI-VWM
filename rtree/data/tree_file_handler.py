@@ -56,10 +56,10 @@ class TreeFileHandler:
 
         # calculate remaining attributes
         self.children_per_node = int(
-            (self.node_size - self.node_flag_size - (
+            (self.node_size - self.node_flag_size - self.id_size - (
                     self.dimensions * self.parameters_size * 2)) / self.id_size)
         self.node_padding = self.node_size - (
-                self.node_flag_size + (self.dimensions * self.parameters_size * 2)
+                self.node_flag_size + self.id_size + (self.dimensions * self.parameters_size * 2)
                 + (self.children_per_node * self.id_size))
 
         # sets the maximum number of entries in the Node class
@@ -219,7 +219,7 @@ class TreeFileHandler:
     def write_node_on_position(self):
         pass
 
-    def create_node(self, node: RTreeNode, update_only: bool = False):
+    def insert_node(self, node: RTreeNode):
         """Writes node on the current position of the file head."""
         flag = int(node.is_leaf)
         self.file.write(flag.to_bytes(self.node_flag_size, byteorder=TREE_BYTEORDER, signed=False))
@@ -247,23 +247,27 @@ class TreeFileHandler:
         self.file.write(int(0).to_bytes(self.node_padding, byteorder=TREE_BYTEORDER, signed=False))
 
         self.file.flush()
-        if not update_only:
-            self.highest_id += 1
-        node_id = self.highest_id
+        # if not update_only:
+        #     self.highest_id += 1
+        # node_id = self.highest_id
         self.__update_file_size()
         self.current_position = self.file.tell()
 
         self.nodes_written_count += 1
+        #
+        # return node_id
 
-        return node_id
-
-    def insert_node(self, node: RTreeNode) -> int:
+    def create_node(self, node: RTreeNode) -> int:
         """Writes node on the current position of the file head."""
         # moves the file handle to the end of file
         self.file.seek(0, 2)
-        return self.create_node(node)
+        self.insert_node(node)
+        self.highest_id += 1
+        node_id = self.highest_id
+        return node_id
 
     def update_tree_depth(self, tree_depth: int):
+        # todo delete
         self.tree_depth = tree_depth
         # write_header()
 
@@ -271,4 +275,5 @@ class TreeFileHandler:
         address = self.__get_node_address(node_id)
         self.file.seek(address, 0)
         self.nodes_written_count += 1
-        return self.create_node(node, update_only=True)
+        self.insert_node(node)
+        return node_id
