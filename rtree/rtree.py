@@ -531,6 +531,95 @@ class RTree:
 
         return seed_node_1, seed_node_2
 
+    def handle_full_node(self, desired_node: RTreeNode, new_id: int, new_box: Tuple[MBBDim, ...]):
+        desired_node.insert_box(new_id, new_box)  # insert into object, not file
+        split_node_1, split_node_2 = self.execute_split(desired_node)
+
+        if desired_node.parent_id is None:
+            raise Exception("desired_node parent id cannot be none")
+        if desired_node.id is None:
+            raise Exception("desired_node id cannot be none")
+
+        parent_node = self.__get_node(desired_node.parent_id)
+
+        if parent_node is None:
+            raise Exception("parent_node cannot be none")
+        if parent_node.id is None:
+            raise Exception("parent_node id cannot be none")
+
+        if parent_node.is_full():
+            if parent_node.id == desired_node.id == self.root_id:
+
+                new_root = RTreeNode.create_empty_node(self.dimensions, is_leaf=False)
+                new_root.parent_id = -1
+
+                smaller_split_node, bigger_split_node = sorted([split_node_1, split_node_2],
+                                                               key=lambda x: len(x.child_nodes))
+
+                # save the splits
+                smaller_split_node.id = self.tree_handler.create_node(smaller_split_node)
+                bigger_split_node.id = self.tree_handler.update_node(desired_node.id, bigger_split_node)
+
+                # # change parent
+                # for child_ids in smaller_split_node:
+                #     pass
+
+                new_root.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
+                new_root.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
+
+                new_root_id = self.tree_handler.create_node(new_root)
+                self.root_id = new_root_id
+                new_root.parent_id = self.root_id
+                self.tree_handler.update_node(self.root_id, new_root)
+                # todo update children parent id
+
+                smaller_split_node.parent_id = self.root_id
+                bigger_split_node.parent_id = self.root_id
+                self.tree_handler.update_node(smaller_split_node.id, smaller_split_node)
+                self.tree_handler.update_node(bigger_split_node.id, bigger_split_node)
+
+                print(smaller_split_node.is_leaf, "is leaf : smaller split", len(smaller_split_node.child_nodes),
+                      smaller_split_node.child_nodes)
+                print(bigger_split_node.is_leaf, "is leaf : bigger split", len(bigger_split_node.child_nodes),
+                      bigger_split_node.child_nodes)
+                print(new_root.is_leaf, "is leaf : new_root", len(new_root.child_nodes), new_root.child_nodes)
+            else:
+                # parent node is full, but it is not a root node
+
+                # print(split_node_1.is_leaf, "is leaf : split 1", len(split_node_1.child_nodes), split_node_1.child_nodes)
+                # print(split_node_2.is_leaf, "is leaf : split 2", len(split_node_2.child_nodes), split_node_2.child_nodes)
+                # print(parent_node.is_leaf, "is leaf : parent_node", len(parent_node.child_nodes), parent_node.child_nodes)
+
+                smaller_split_node, bigger_split_node = sorted([split_node_1, split_node_2],
+                                                               key=lambda x: len(x.child_nodes))
+
+                # save the splits
+                smaller_split_node.id = self.tree_handler.create_node(smaller_split_node)
+                bigger_split_node.id = self.tree_handler.update_node(desired_node.id, bigger_split_node)
+
+                # parent_node.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
+                parent_node.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
+                self.tree_handler.update_node(parent_node.id, parent_node)
+
+                # if their parent is full, split it too -> recursively
+                self.handle_full_node(parent_node, smaller_split_node.id, smaller_split_node.mbb.box)
+
+                # raise Exception("parent node is full")
+        else:  # desired is full and split, parent is not full, save splits into parent
+
+            smaller_split_node, bigger_split_node = sorted([split_node_1, split_node_2],
+                                                           key=lambda x: len(x.child_nodes))
+
+            smaller_split_node.id = self.tree_handler.create_node(smaller_split_node)
+            bigger_split_node.id = self.tree_handler.update_node(desired_node.id, bigger_split_node)
+
+            # todo update smaller_split_node child nodes parent nodes
+
+            parent_node.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
+            parent_node.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
+
+            self.tree_handler.update_node(parent_node.id, parent_node)
+
     def insert_entry(self, new_entry: DatabaseEntry):
         new_entry_position = self.database.create(new_entry)
 

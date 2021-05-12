@@ -57,12 +57,13 @@ class RTreeNode:
             raise ValueError(f"new_entry has size of {len(new_box)}, but it should be {len(self.mbb.box)}")
 
         if new_node_id in self.child_nodes:
-            raise ValueError(f"Entry with ID={new_node_id} is already in node entries")
+            # raise ValueError(f"Entry with ID={new_node_id} is already in node entries")
+            pass
+        else:
+            self.child_nodes.append(new_node_id)
 
-        if len(self.child_nodes) + 1 > self.max_entries_count:
-            return False
-
-        self.child_nodes.append(new_node_id)
+        # if len(self.child_nodes) + 1 > self.max_entries_count:
+        #     return False
         self.mbb.insert_mbb(new_box)
 
         return True

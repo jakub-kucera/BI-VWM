@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt, patches
 from rtree.rtree import RTree
 
 
-def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
+def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only=True):
     """Creates and image which visualizes the rtree nodes and database entries."""
 
     # check if r-tree can be visualized
@@ -40,19 +40,21 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
                                       linewidth=1, edgecolor='r', facecolor='None')
         ax.add_patch(node_rect)
 
-    for db_entry_address in database_entries_addresses:
-        entry = r_tree.database.search(db_entry_address)
-        if entry is None:
-            raise ValueError(f"Database entry not found. Entry address = {db_entry_address}")
+    if not show_mbbs_only:
+        for db_entry_address in database_entries_addresses:
+            entry = r_tree.database.search(db_entry_address)
+            if entry is None:
+                raise ValueError(f"Database entry not found. Entry address = {db_entry_address}")
 
-        coordinates = entry.coordinates
+            coordinates = entry.coordinates
 
-        if len(coordinates) != r_tree.dimensions:
-            raise ValueError(f"Database entry has dimension of {len(coordinates)}, \
-            but rtree has dimension of {r_tree.dimensions}")
+            if len(coordinates) != r_tree.dimensions:
+                raise ValueError(f"Database entry has dimension of {len(coordinates)}, \
+                but rtree has dimension of {r_tree.dimensions}")
 
-        plt.plot(coordinates[0], coordinates[1], 'bo')
-
+            plt.plot(coordinates[0], coordinates[1], 'bo')
+    else:
+        plt.plot()
     # plt.axis('off')
     # plt.gca().set_position([0, 0, 1, 1])
     # plt.savefig(output_img)

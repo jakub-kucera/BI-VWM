@@ -1,6 +1,7 @@
 import os
 import pathlib
 import traceback
+import random
 
 from rtree.data.database_entry import DatabaseEntry
 from rtree.default_config import WORKING_DIRECTORY
@@ -52,7 +53,7 @@ if __name__ == '__main__':
 
         # print(tree.search_node(coordinates=[1, 4]))
         # print(tree.search_node(coordinates=[-1, -1]))
-        visualize(tree)
+        visualize(tree, show_mbbs_only=True)
     except Exception as e:
         print(f"x: {x}; y: {y}")
         print(f"total_insert_count {total_insert_count}")
