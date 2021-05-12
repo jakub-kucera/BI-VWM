@@ -20,11 +20,12 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
 
     # creates empty plot
     fig, ax = plt.subplots()
-    ax.plot([0, 0], [0, 0])
+    # ax.plot([0, 0], [0, 0])
 
     database_entries_addresses: List[int] = []
     # gets all the rtree nodes
     nodes = r_tree.get_all_nodes()
+    print(f"Visualiser number of nodes: {len(nodes)}")
 
     for node in nodes:
         box = node.mbb.box
@@ -32,13 +33,12 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
         if node.is_leaf:
             # gets ids of database entries
             database_entries_addresses.extend(node.child_nodes)
-            pass
-        else:
-            # Create a Rectangle and add it to plot
-            node_rect = patches.Rectangle((box[0].low, box[1].low), box[0].high - box[0].low,
-                                          box[1].high - box[1].low,
-                                          linewidth=1, edgecolor='r', facecolor='None')
-            ax.add_patch(node_rect)
+        # else:
+        # Create a Rectangle and add it to plot
+        node_rect = patches.Rectangle((box[0].low, box[1].low), box[0].high - box[0].low,
+                                      box[1].high - box[1].low,
+                                      linewidth=1, edgecolor='r', facecolor='None')
+        ax.add_patch(node_rect)
 
     for db_entry_address in database_entries_addresses:
         entry = r_tree.database.search(db_entry_address)
@@ -51,12 +51,13 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png"):
             raise ValueError(f"Database entry has dimension of {len(coordinates)}, \
             but rtree has dimension of {r_tree.dimensions}")
 
-        plt.plot(105, 200, 'bo')
+        plt.plot(coordinates[0], coordinates[1], 'bo')
 
-    plt.axis('off')
-    plt.gca().set_position([0, 0, 1, 1])
-    plt.savefig(output_img)
+    # plt.axis('off')
+    # plt.gca().set_position([0, 0, 1, 1])
+    # plt.savefig(output_img)
+    plt.show()
 
     # opens the image. (Doesnt support SVG)
-    img = Image.open(output_img)
-    img.show()
+    # img = Image.open(output_img)
+    # img.show()

@@ -1,8 +1,11 @@
 import os
 import pathlib
+import traceback
 
+from rtree.data.database_entry import DatabaseEntry
 from rtree.default_config import WORKING_DIRECTORY
 from rtree.rtree import RTree
+from rtree.ui.visualiser import visualize
 
 
 def delete_saved_rtree():
@@ -23,12 +26,39 @@ if __name__ == '__main__':
     print("hello, friend")
     # print(cpu_count())
     tree = RTree()
-    print("tree.root_id")
-    print(tree.root_id)
-    print("tree.get_node(tree.root_id)")
-    print(tree._RTree__get_node(tree.root_id))
-    # visualize(r_tree=tree)
-    # delete_saved_rtree()
+
+    x, y = -1, -1
+    total_insert_count = 0
+    try:
+        for y in range(0, 30):
+            for x in range(0, 100):
+                total_insert_count += 1
+                tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
+
+        tree.insert_entry(DatabaseEntry(coordinates=[1, 4], data="This is data 0"))
+        total_insert_count += 1
+        tree.insert_entry(DatabaseEntry(coordinates=[1, 1], data="This is data 1"))
+        total_insert_count += 1
+        tree.insert_entry(DatabaseEntry(coordinates=[-1, -1], data="This is data 2"))
+        total_insert_count += 1
+
+        for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[5, 5]):
+            print(found_node)
+
+        print("==========================")
+
+        for found_node in tree.search_k_nearest_neighbours(4, coordinates=[0, 4]):
+            print(found_node)
+
+        # print(tree.search_node(coordinates=[1, 4]))
+        # print(tree.search_node(coordinates=[-1, -1]))
+        visualize(tree)
+    except Exception as e:
+        print(f"x: {x}; y: {y}")
+        print(f"total_insert_count {total_insert_count}")
+        traceback.print_exc()
+
+    delete_saved_rtree()
 
     # if not load_from_files:
     #     new_entry = DatabaseEntry([0 for coord in range(self.dimensions)],

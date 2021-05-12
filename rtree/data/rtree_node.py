@@ -49,9 +49,9 @@ class RTreeNode:
     def overlaps(self, inner: RTreeNode):
         return self.mbb.overlaps(inner.mbb)
 
-    def insert_node_from_box(self, new_node_id: int, new_box: Tuple[MBBDim, ...]) -> bool:
-        if self.is_leaf:
-            raise Exception("Cannot insert child node into leaf node.")
+    def insert_box(self, new_node_id: int, new_box: Tuple[MBBDim, ...]) -> bool:
+        # if self.is_leaf:
+        #     raise Exception("Cannot insert child node into leaf node.")
 
         if len(self.mbb.box) != len(new_box):
             raise ValueError(f"new_entry has size of {len(new_box)}, but it should be {len(self.mbb.box)}")
@@ -67,8 +67,8 @@ class RTreeNode:
 
         return True
 
-    def insert_node_from_node(self, new_node_id: int, new_node: RTreeNode) -> bool:
-        return self.insert_node_from_box(new_node_id, new_node.mbb.box)
+    # def insert_node_from_node(self, new_node_id: int, new_node: RTreeNode) -> bool:
+    #     return self.insert_box(new_node_id, new_node.mbb.box)
 
     def insert_entry_from_entry(self, new_entry_position: int, new_entry: DatabaseEntry) -> bool:
         if not self.is_leaf:

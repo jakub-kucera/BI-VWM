@@ -95,10 +95,14 @@ class Database:
             dim = int.from_bytes(self.file.read(self.parameter_record_size), byteorder=DATABASE_BYTEORDER, signed=True)
             coordinates.append(dim)
 
-        data = pickle.load(self.file)
+        try:
+            data = pickle.load(self.file)
+        except Exception as e:
+            print(f"Error when calling picle on position {byte_position}")
+            raise e
 
         self.file.flush()
-        
+
         return DatabaseEntry(coordinates, data, is_present)
 
     def create(self, new_record: DatabaseEntry) -> int:

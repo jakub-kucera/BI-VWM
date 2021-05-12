@@ -26,6 +26,13 @@ class MBB:
         self.box = dimensions
         self.size = self.get_size(self.box)
 
+    def __str__(self):
+        string_out = "["
+        for dim in self.box:
+            string_out += f"[low: {dim.low}, high: {dim.high}], "
+        string_out += "]"
+        return string_out
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
@@ -38,7 +45,7 @@ class MBB:
 
     def contains_inner(self, inner_mbb: MBB):
         """Checks if passed MBB is inside this MBB"""
-        for inner, outer in zip(self.box, inner_mbb.box):
+        for outer, inner in zip(self.box, inner_mbb.box):
             if not outer.contains(inner):
                 return False
         return True

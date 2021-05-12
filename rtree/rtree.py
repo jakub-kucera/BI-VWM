@@ -308,26 +308,39 @@ class RTree:
             raise Exception("Node id cannot be None")
 
         for child_node_id in node.child_nodes:
-            child_node = self.__get_node(child_node_id)
+            child_mbb_box: Tuple[MBBDim, ...] = ()
 
-            if child_node is None:
-                raise Exception("Child node cannot be None")
-            if child_node.id is None:
-                raise Exception("Child node id cannot be None")
+            if node.is_leaf:
+                database_entry = self.database.search(child_node_id)
 
-            seed_1_increase = seed_node_1.mbb.size_increase_insert(child_node.mbb.box)
-            seed_2_increase = seed_node_2.mbb.size_increase_insert(child_node.mbb.box)
+                if database_entry is None:
+                    raise Exception("Child node [of leaf, actually DBEntry] cannot be None")
+
+                child_mbb_box = database_entry.get_mbb().box
+
+            else:
+                child_node = self.__get_node(child_node_id)
+
+                if child_node is None:
+                    raise Exception("Child node cannot be None")
+                if child_node.id is None:
+                    raise Exception("Child node id cannot be None")
+
+                child_mbb_box = child_node.mbb.box
+
+            seed_1_increase = seed_node_1.mbb.size_increase_insert(child_mbb_box)
+            seed_2_increase = seed_node_2.mbb.size_increase_insert(child_mbb_box)
 
             if seed_1_increase > seed_2_increase or seed_node_1.has_over_balance():
-                seed_node_2.mbb.insert_mbb(child_node.mbb.box)
+                seed_node_2.mbb.insert_mbb(child_mbb_box)
 
             elif seed_2_increase > seed_1_increase or seed_node_2.has_over_balance():
-                seed_node_1.mbb.insert_mbb(child_node.mbb.box)
+                seed_node_1.mbb.insert_mbb(child_mbb_box)
 
             elif seed_node_2.mbb.size > seed_node_1.mbb.size:
-                seed_node_1.mbb.insert_mbb(child_node.mbb.box)
+                seed_node_1.mbb.insert_mbb(child_mbb_box)
             else:
-                seed_node_2.mbb.insert_mbb(child_node.mbb.box)
+                seed_node_2.mbb.insert_mbb(child_mbb_box)
 
             # save seed_node_1 into node
         self.tree_handler.update_node(node.id, seed_node_1)
@@ -374,9 +387,11 @@ class RTree:
 
         if parent_node.is_full():
             if parent_node.id == self.root_id:
-                new_root = RTreeNode.create_empty_node(self.dimensions, is_leaf=parent_node.is_leaf)
+                new_root = RTreeNode.create_empty_node(self.dimensions, is_leaf=parent_node.is_leaf)  # todo change <==
                 new_root.mbb.insert_mbb(parent_node.mbb.box)
-                new_root.insert_node_from_node(parent_node.id, parent_node)
+                new_root.insert_box(parent_node.id, parent_node.mbb.box)
+                # new_root.insert_node_from_node(parent_node.id, parent_node)
+                new_root.parent_id = self.root_id
 
                 new_root_id = self.tree_handler.create_node(new_root)
                 self.root_id = new_root_id
@@ -385,9 +400,9 @@ class RTree:
                 # self.tree_handler.update_node(seed_node_2_id, seed_node_2)
 
                 self.execute_split(parent_node, new_root)  # (old_root,new_root) old_root is overfilled, create new_root
-                pass
-
-            self.rec_split_node(parent_node.id)
+                return
+            else:
+                self.rec_split_node(parent_node.id)
         else:
             self.execute_split(node, parent_node)  # node is overfilled, split into two nodes and append to parent_node
 
@@ -422,8 +437,23 @@ class RTree:
     def rebuild(self):
         pass
 
+    def rec_get_all_nodes(self, node: RTreeNode) -> List[RTreeNode]:
+        if node.is_leaf:
+            return [node]
+
+        nodes_list: List[RTreeNode] = []
+        for child_id in node.child_nodes:
+            child_node = self.__get_node(child_id)
+            if child_node is None:
+                raise Exception("Node cannot be None")
+
+            nodes_list.extend(self.rec_get_all_nodes(child_node))
+        return nodes_list
+
     def get_all_nodes(self):
         """Returns all RTree nodes. Do not call on larger rtrees."""
-        # Maybe use self.search_rectangle(big rectangle)
-        # or use self.search_nearest_k_neighbours(random entry, number of nodes / giant number)
-        pass
+        root_node = self.__get_node(self.root_id)
+        if root_node is None:
+            raise Exception("Root node cannot be None")
+
+        return self.rec_get_all_nodes(root_node)

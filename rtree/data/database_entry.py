@@ -11,6 +11,9 @@ class DatabaseEntry:
         self.coordinates = coordinates
         self.data = data  # can be empty
 
+    def __str__(self):
+        return str(self.__dict__)
+
     def get_mbb(self):
         return MBB(tuple(MBBDim(coords, coords) for coords in self.coordinates))
 
