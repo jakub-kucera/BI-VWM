@@ -574,25 +574,28 @@ class RTree:
     def rebuild(self):
         pass
 
-    def rec_get_all_nodes(self, node: RTreeNode) -> List[RTreeNode]:
-        if node.is_leaf:
-            return [node]
+    def rec_get_all_nodes(self, node: RTreeNode, depth: int) -> List[Tuple[RTreeNode, int]]:
 
-        nodes_list: List[RTreeNode] = []
+        if node.is_leaf:
+            return [(node, depth)]
+
+        nodes_list: List[Tuple[RTreeNode, int]] = []
+        nodes_list.append((node, depth))
+
+        depth += 1
         for child_id in node.child_nodes:
             child_node = self.__get_node(child_id)
             if child_node is None:
                 raise Exception("Node cannot be None")
 
-            nodes_list.extend(self.rec_get_all_nodes(child_node))
+            nodes_list.extend(self.rec_get_all_nodes(child_node, depth))
+
         return nodes_list
 
-    def get_all_nodes(self):
+    def get_all_nodes(self) -> List[Tuple[RTreeNode, int]]:
         """Returns all RTree nodes. Do not call on larger rtrees."""
         root_node = self.__get_node(self.root_id)
         if root_node is None:
             raise Exception("Root node cannot be None")
 
-        all_nodes = self.rec_get_all_nodes(root_node)
-        all_nodes.append(root_node)
-        return all_nodes
+        return self.rec_get_all_nodes(root_node, 0)
