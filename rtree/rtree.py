@@ -292,8 +292,7 @@ class RTree:
         return node
 
     def rec_search(self, entry_mmb: MBB, node: RTreeNode) -> int:
-
-        print(f"rec search node_id={node.id}, is_leaf: {node.is_leaf}", node.child_nodes)
+        # print(f"rec search node_id={node.id}, is_leaf: {node.is_leaf} with children {len(node.child_nodes)}:", node.child_nodes)
 
         if node.is_leaf:
             if node.id is None:
@@ -341,6 +340,7 @@ class RTree:
         # if returned full, and node_id == root_id, increase tree_depth
 
     def execute_split(self, node: RTreeNode):
+        # print("execute split")
         seed_node_1, seed_node_2 = node.get_seed_split_nodes()
 
         if node is None:
@@ -372,54 +372,33 @@ class RTree:
             seed_1_increase = seed_node_1.mbb.size_increase_insert(child_mbb_box)
             seed_2_increase = seed_node_2.mbb.size_increase_insert(child_mbb_box)
 
-            if seed_1_increase > seed_2_increase or seed_node_1.has_over_balance():
+            if seed_node_1.has_over_balance():
+                # print("** insert 2")
                 seed_node_2.insert_box(child_node_id, child_mbb_box)
 
-            elif seed_2_increase > seed_1_increase or seed_node_2.has_over_balance():
+            elif seed_node_2.has_over_balance():
+                # print("* insert 1")
+                seed_node_1.insert_box(child_node_id, child_mbb_box)
+
+            elif seed_1_increase > seed_2_increase:
+                # print("++ insert 2")
+                seed_node_2.insert_box(child_node_id, child_mbb_box)
+
+            elif seed_2_increase > seed_1_increase:
+                # print("+ insert 1")
                 seed_node_1.insert_box(child_node_id, child_mbb_box)
 
             elif seed_node_2.mbb.size > seed_node_1.mbb.size:
+                # print("- insert 1")
                 seed_node_1.insert_box(child_node_id, child_mbb_box)
             else:
+                # print("-- insert 2")
                 seed_node_2.insert_box(child_node_id, child_mbb_box)
 
         return seed_node_1, seed_node_2
 
-    def propagate_mbb_increase(self, parent_node: RTreeNode):
-        # return
-        current_node = parent_node
-        # parent_node = new_node
-
-        if current_node is None:
-            raise Exception("current_node cannot be none")
-
-        while current_node.id != self.root_id:
-            if current_node.parent_id is None:
-                raise Exception("current_node.parent_id cannot be none")
-            if current_node.id is None:
-                raise Exception("current_node.id cannot be none")
-
-            new_parent_node = self.__get_node(current_node.parent_id)
-            if new_parent_node is None:
-                raise Exception("parent_node cannot be none")
-            if new_parent_node.id is None:
-                raise Exception("parent_node.id cannot be none")
-
-            print("current_node", current_node.id, current_node.is_leaf, "new_parent_node", new_parent_node.id,
-                  current_node.is_leaf, ":: root id", self.root_id)
-
-            new_parent_node.insert_box(current_node.id, current_node.mbb.box)
-            self.tree_handler.update_node(new_parent_node.id, new_parent_node)
-
-            print(parent_node.child_nodes)
-            print(new_parent_node.child_nodes)
-
-            # if new_parent_node.id == self.root_id:
-            #     break
-
-            current_node = new_parent_node
-
     def update_parent_reference(self, parent_node: RTreeNode):
+        # print("update")
         # return
         if not parent_node.is_leaf:
             for child_id in parent_node.child_nodes:
@@ -431,6 +410,7 @@ class RTree:
                 self.tree_handler.update_node(child_id, child_node)
 
     def handle_full_node(self, desired_node: RTreeNode, new_id: int, new_box: Tuple[MBBDim, ...]):
+        # print("handle")
         desired_node.insert_box(new_id, new_box)  # insert into object, not file
         split_node_1, split_node_2 = self.execute_split(desired_node)
 
@@ -475,21 +455,23 @@ class RTree:
                 self.tree_handler.update_node(smaller_split_node.id, smaller_split_node)
                 self.tree_handler.update_node(bigger_split_node.id, bigger_split_node)
 
+                # print(smaller_split_node.is_leaf, "is leaf : smaller split (id ", smaller_split_node.id, ")", len(smaller_split_node.child_nodes), smaller_split_node.child_nodes)
+                # print(bigger_split_node.is_leaf, "is leaf : bigger split (id ", bigger_split_node.id, ")", len(bigger_split_node.child_nodes), bigger_split_node.child_nodes)
+                # print(new_root.is_leaf, "is leaf : new_root (id ", new_root_id, ")", len(new_root.child_nodes), new_root.child_nodes)
+                # print("::::")
+
                 self.propagate_stretch(smaller_split_node)
                 self.propagate_stretch(bigger_split_node)
 
-                print(smaller_split_node.is_leaf, "is leaf : smaller split", len(smaller_split_node.child_nodes),
-                      smaller_split_node.child_nodes)
-                print(bigger_split_node.is_leaf, "is leaf : bigger split", len(bigger_split_node.child_nodes),
-                      bigger_split_node.child_nodes)
-                print(new_root.is_leaf, "is leaf : new_root", len(new_root.child_nodes), new_root.child_nodes)
+                # smaller_split_node = self.__get_node(smaller_split_node.id)
+                # bigger_split_node = self.__get_node(bigger_split_node.id)
+                # new_root = self.__get_node(new_root_id)
+
+                # print(smaller_split_node.is_leaf, "is leaf : (parent: ", smaller_split_node.parent_id, ") smaller split", len(smaller_split_node.child_nodes), smaller_split_node.child_nodes)
+                # print(bigger_split_node.is_leaf, "is leaf : (parent: ", bigger_split_node.parent_id, ") bigger split", len(bigger_split_node.child_nodes), bigger_split_node.child_nodes)
+                # print(new_root.is_leaf, "is leaf : (parent: ", new_root.parent_id, ") new_root", len(new_root.child_nodes), new_root.child_nodes)
             else:
                 # parent node is full, but it is not a root node
-
-                # print(split_node_1.is_leaf, "is leaf : split 1", len(split_node_1.child_nodes), split_node_1.child_nodes)
-                # print(split_node_2.is_leaf, "is leaf : split 2", len(split_node_2.child_nodes), split_node_2.child_nodes)
-                # print(parent_node.is_leaf, "is leaf : parent_node", len(parent_node.child_nodes), parent_node.child_nodes)
-
                 smaller_split_node, bigger_split_node = sorted([split_node_1, split_node_2],
                                                                key=lambda x: len(x.child_nodes))
 
@@ -502,9 +484,6 @@ class RTree:
                 # parent_node.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
                 parent_node.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
                 self.tree_handler.update_node(parent_node.id, parent_node)
-
-                self.propagate_stretch(smaller_split_node)
-                self.propagate_stretch(bigger_split_node)
 
                 # if their parent is full, split it too -> recursively
                 self.handle_full_node(parent_node, smaller_split_node.id, smaller_split_node.mbb.box)
@@ -525,22 +504,21 @@ class RTree:
 
             self.tree_handler.update_node(parent_node.id, parent_node)
 
-            self.propagate_mbb_increase(parent_node)
             root_node = self.__get_node(self.root_id)
-            print("root children", root_node.child_nodes)
-            print("small", smaller_split_node.id, "bigger", bigger_split_node.id, "parent", parent_node.id)
+            # print("root children", root_node.child_nodes)
+            # print("small", smaller_split_node.id, "bigger", bigger_split_node.id, "parent", parent_node.id)
 
             self.propagate_stretch(smaller_split_node)
             self.propagate_stretch(bigger_split_node)
 
     def insert_entry(self, new_entry: DatabaseEntry):
+        # print("insert =================================================================== <- ", new_entry.get_mbb())
         new_entry_position = self.database.create(new_entry)
 
         root_node = self.__get_node(self.root_id)
         if root_node is None:
             raise Exception("root node cannot be None")
 
-        print("=================================================================== <- ", new_entry.get_mbb())
         desired_node_id = self.rec_search(new_entry.get_mbb(), root_node)
         desired_node = self.__get_node(desired_node_id)
 
@@ -551,20 +529,24 @@ class RTree:
 
             self.handle_full_node(desired_node, new_entry_position, new_entry.get_mbb().box)
             root_node = self.__get_node(self.root_id)
-            print("root children", root_node.child_nodes)
+            # print("root children", root_node.child_nodes)
             self.propagate_stretch(desired_node)
 
         else:
             desired_node.insert_box(new_entry_position, new_entry.get_mbb().box)
             self.tree_handler.update_node(desired_node_id, desired_node)
+            # print("re-desired ", desired_node_id, ":", len(desired_node.child_nodes), desired_node.child_nodes)
             self.propagate_stretch(desired_node)
 
     def propagate_stretch(self, node: RTreeNode):
+        # print("propagate")
         parent_node = self.__get_node(node.parent_id)
         # print("maybe stretch", parent_node.id, "until", parent_node.mbb, node.mbb, "    root node being", self.root_id, " with ", parent_node.child_nodes)
         if not parent_node.contains_inner(node):
             # print("do stretch")
-            parent_node.insert_box(node.id, node.mbb.box)
+            contained_id = parent_node.child_nodes[0]
+            parent_node.insert_box(contained_id, node.mbb.box)
+            # print(f"propagate {node.id} into parent {parent_node.id}")
             self.tree_handler.update_node(parent_node.id, parent_node)
             # print("after stretch", parent_node.id, "until", parent_node.mbb, node.mbb)
             self.propagate_stretch(parent_node)

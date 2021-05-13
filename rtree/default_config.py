@@ -8,7 +8,7 @@ TREE_BYTEORDER: Final[str] = 'little'
 DATABASE_BYTEORDER: Final[str] = 'little'
 
 DEFAULT_DIMENSIONS: Final[int] = 2
-DEFAULT_NODE_SIZE: Final[int] = 1024
+DEFAULT_NODE_SIZE: Final[int] = 128  # 512  # 1024
 NODE_ID_SIZE: Final[int] = 8
 PARAMETER_RECORD_SIZE: Final[int] = 4
 RECORD_FLAG_SIZE: Final[int] = 1
