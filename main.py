@@ -31,25 +31,28 @@ if __name__ == '__main__':
     x, y = -1, -1
     total_insert_count = 0
     try:
-        for y in range(0, 200):
-            for x in range(0, 200):
+        for y in range(0, 18):
+            for x in range(0, 18):
                 total_insert_count += 1
                 tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
 
-        tree.insert_entry(DatabaseEntry(coordinates=[1, 4], data="This is data 0"))
-        total_insert_count += 1
-        tree.insert_entry(DatabaseEntry(coordinates=[1, 1], data="This is data 1"))
-        total_insert_count += 1
-        tree.insert_entry(DatabaseEntry(coordinates=[-1, -1], data="This is data 2"))
+        # tree.insert_entry(DatabaseEntry(coordinates=[1, 4], data="This is data 0"))
+        # total_insert_count += 1
+        # tree.insert_entry(DatabaseEntry(coordinates=[1, 1], data="This is data 1"))
+        # total_insert_count += 1
+        # tree.insert_entry(DatabaseEntry(coordinates=[-1, -1], data="This is data 2"))
+        # total_insert_count += 1
+
+        tree.insert_entry(DatabaseEntry(coordinates=[-5, -5], data="This is data 2"))
         total_insert_count += 1
 
-        for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[5, 5]):
-            print(found_node)
-
-        print("==========================")
-
-        for found_node in tree.search_k_nearest_neighbours(4, coordinates=[0, 4]):
-            print(found_node)
+        # for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[5, 5]):
+        #     print(found_node)
+        #
+        # print("==========================")
+        #
+        # for found_node in tree.search_k_nearest_neighbours(4, coordinates=[0, 4]):
+        #     print(found_node)
 
         # print(tree.search_node(coordinates=[1, 4]))
         # print(tree.search_node(coordinates=[-1, -1]))
@@ -59,6 +62,9 @@ if __name__ == '__main__':
         print(f"total_insert_count {total_insert_count}")
         traceback.print_exc()
 
+    print(f"total_insert_count {total_insert_count}")
+    tree.tree_handler.file.close()
+    tree.database.file.close()
     delete_saved_rtree()
 
     # if not load_from_files:

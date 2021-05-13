@@ -678,7 +678,7 @@ class RTree:
         if root_node is None:
             raise Exception("root node cannot be None")
 
-        print("===================================================================")
+        print("=================================================================== <- ", new_entry.get_mbb())
         desired_node_id = self.rec_search(new_entry.get_mbb(), root_node)
         desired_node = self.__get_node(desired_node_id)
 
@@ -716,6 +716,9 @@ class RTree:
                     self.tree_handler.update_node(split_node_1.id, split_node_1)
                     self.tree_handler.update_node(split_node_2.id, split_node_2)
 
+                    self.propagate_stretch(split_node_1)
+                    self.propagate_stretch(split_node_2)
+
                     print(split_node_1.is_leaf, "is leaf : split 1", len(split_node_1.child_nodes), split_node_1.child_nodes)
                     print(split_node_2.is_leaf, "is leaf : split 2", len(split_node_2.child_nodes), split_node_2.child_nodes)
                     print(new_root.is_leaf, "is leaf : new_root", len(split_node_2.child_nodes), new_root.child_nodes)
@@ -731,10 +734,23 @@ class RTree:
                 parent_node.insert_box(split_node_2.id, split_node_2.mbb.box)
                 self.tree_handler.update_node(parent_node.id, parent_node)
 
+                self.propagate_stretch(split_node_1)
+                self.propagate_stretch(split_node_2)
+
         else:
             desired_node.insert_box(new_entry_position, new_entry.get_mbb().box)
             self.tree_handler.update_node(desired_node_id, desired_node)
+            self.propagate_stretch(desired_node)
 
+    def propagate_stretch(self, node: RTreeNode):
+        parent_node = self.__get_node(node.parent_id)
+        # print("maybe stretch", parent_node.id, "until", parent_node.mbb, node.mbb, "    root node being", self.root_id, " with ", parent_node.child_nodes)
+        if not parent_node.contains_inner(node):
+            # print("do stretch")
+            parent_node.insert_box(node.id, node.mbb.box)
+            self.tree_handler.update_node(parent_node.id, parent_node)
+            # print("after stretch", parent_node.id, "until", parent_node.mbb, node.mbb)
+            self.propagate_stretch(parent_node)
 
     def __too_many_deleted_entries(self):
         return (self.node_size ** self.depth) / 2 < self.deleted_db_entries_counter
@@ -777,4 +793,6 @@ class RTree:
         if root_node is None:
             raise Exception("Root node cannot be None")
 
-        return self.rec_get_all_nodes(root_node)
+        list_nodes = self.rec_get_all_nodes(root_node)
+        list_nodes.append(root_node)
+        return list_nodes
