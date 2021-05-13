@@ -541,7 +541,7 @@ class RTree:
         if current_node is None:
             raise Exception("current_node cannot be none")
 
-        while True:
+        while current_node.id != self.root_id:
             if current_node.parent_id is None:
                 raise Exception("current_node.parent_id cannot be none")
             if current_node.id is None:
@@ -559,10 +559,11 @@ class RTree:
             new_parent_node.insert_box(current_node.id, current_node.mbb.box)
             self.tree_handler.update_node(new_parent_node.id, new_parent_node)
 
-            print(current_node.child_nodes)
+            print(parent_node.child_nodes)
+            print(new_parent_node.child_nodes)
 
-            if new_parent_node.id == self.root_id:
-                break
+            # if new_parent_node.id == self.root_id:
+            #     break
 
             current_node = new_parent_node
 
@@ -777,4 +778,6 @@ class RTree:
         if root_node is None:
             raise Exception("Root node cannot be None")
 
-        return self.rec_get_all_nodes(root_node)
+        all_nodes = self.rec_get_all_nodes(root_node)
+        all_nodes.append(root_node)
+        return all_nodes
