@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt, patches
 
 from rtree.rtree import RTree
 
+VISUALIZER_MBB_COLOR = {0: 'r', 1: 'b', 2: 'g', 3: 'c', 4: 'm', 5: 'y'}
 
 def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only=True):
     """Creates and image which visualizes the rtree nodes and database entries."""
@@ -27,7 +28,7 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only
     nodes = r_tree.get_all_nodes()
     print(f"Visualiser number of nodes: {len(nodes)}")
 
-    for node in nodes:
+    for node, depth in nodes:
         box = node.mbb.box
 
         if node.is_leaf:
@@ -37,7 +38,9 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only
         # Create a Rectangle and add it to plot
         node_rect = patches.Rectangle((box[0].low, box[1].low), box[0].high - box[0].low,
                                       box[1].high - box[1].low,
-                                      linewidth=1, edgecolor='r', facecolor='None')
+                                      linewidth=1, edgecolor=VISUALIZER_MBB_COLOR[depth], facecolor='None')
+        # linewidth=1, edgecolor='r', facecolor='None')
+        plt.text(box[0].low, box[1].low, node.id)
         ax.add_patch(node_rect)
 
     if not show_mbbs_only:

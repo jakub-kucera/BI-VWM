@@ -31,8 +31,15 @@ if __name__ == '__main__':
     x, y = -1, -1
     total_insert_count = 0
     try:
-        for y in range(0, 18):
-            for x in range(0, 18):
+        # random_y = list(range(0, 26))
+        # random.shuffle(random_y)
+        # random_x = list(range(0, 26))
+        # random.shuffle(random_x)
+        for x in range(0, 18):
+            for y in range(0, 18):
+                # x = random.randint(0, 26)
+                # y = random.randint(0, 26)
+                print(f"x: {x}; y: {y}")
                 total_insert_count += 1
                 tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
 
@@ -45,6 +52,11 @@ if __name__ == '__main__':
 
         tree.insert_entry(DatabaseEntry(coordinates=[-5, -5], data="This is data 2"))
         total_insert_count += 1
+        tree.insert_entry(DatabaseEntry(coordinates=[-1, -1], data="This is data 2"))
+        total_insert_count += 1
+
+        for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[5, 5]):
+            print(found_node)
 
         # for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[5, 5]):
         #     print(found_node)
