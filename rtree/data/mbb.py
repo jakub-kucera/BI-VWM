@@ -45,6 +45,9 @@ class MBB:
 
     def contains_inner(self, inner_mbb: MBB):
         """Checks if passed MBB is inside this MBB"""
+        if len(self.box) != len(inner_mbb.box):
+            return False
+
         for outer, inner in zip(self.box, inner_mbb.box):
             if not outer.contains(inner):
                 return False

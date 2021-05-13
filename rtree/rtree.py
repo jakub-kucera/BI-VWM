@@ -293,6 +293,8 @@ class RTree:
 
     def rec_search(self, entry_mmb: MBB, node: RTreeNode) -> int:
 
+        print(f"rec search node_id={node.id}, is_leaf: {node.is_leaf}", node.child_nodes)
+
         if node.is_leaf:
             if node.id is None:
                 raise Exception("Node id cannot be None")
@@ -531,6 +533,50 @@ class RTree:
 
         return seed_node_1, seed_node_2
 
+    def propagate_mbb_increase(self, parent_node: RTreeNode):
+        # return
+        current_node = parent_node
+        # parent_node = new_node
+
+        if current_node is None:
+            raise Exception("current_node cannot be none")
+
+        while True:
+            if current_node.parent_id is None:
+                raise Exception("current_node.parent_id cannot be none")
+            if current_node.id is None:
+                raise Exception("current_node.id cannot be none")
+
+            new_parent_node = self.__get_node(current_node.parent_id)
+            if new_parent_node is None:
+                raise Exception("parent_node cannot be none")
+            if new_parent_node.id is None:
+                raise Exception("parent_node.id cannot be none")
+
+            print("current_node", current_node.id, current_node.is_leaf, "new_parent_node", new_parent_node.id,
+                  current_node.is_leaf, ":: root id", self.root_id)
+
+            new_parent_node.insert_box(current_node.id, current_node.mbb.box)
+            self.tree_handler.update_node(new_parent_node.id, new_parent_node)
+
+            print(current_node.child_nodes)
+
+            if new_parent_node.id == self.root_id:
+                break
+
+            current_node = new_parent_node
+
+    def update_parent_reference(self, parent_node: RTreeNode):
+        # return
+        if not parent_node.is_leaf:
+            for child_id in parent_node.child_nodes:
+                child_node = self.__get_node(child_id)
+                if child_node is None:
+                    raise Exception("Child Node not found")
+                # print("Updating child")
+                child_node.parent_id = parent_node.id
+                self.tree_handler.update_node(child_id, child_node)
+
     def handle_full_node(self, desired_node: RTreeNode, new_id: int, new_box: Tuple[MBBDim, ...]):
         desired_node.insert_box(new_id, new_box)  # insert into object, not file
         split_node_1, split_node_2 = self.execute_split(desired_node)
@@ -560,9 +606,8 @@ class RTree:
                 smaller_split_node.id = self.tree_handler.create_node(smaller_split_node)
                 bigger_split_node.id = self.tree_handler.update_node(desired_node.id, bigger_split_node)
 
-                # # change parent
-                # for child_ids in smaller_split_node:
-                #     pass
+                # change parent
+                self.update_parent_reference(smaller_split_node)
 
                 new_root.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
                 new_root.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
@@ -571,7 +616,6 @@ class RTree:
                 self.root_id = new_root_id
                 new_root.parent_id = self.root_id
                 self.tree_handler.update_node(self.root_id, new_root)
-                # todo update children parent id
 
                 smaller_split_node.parent_id = self.root_id
                 bigger_split_node.parent_id = self.root_id
@@ -597,6 +641,8 @@ class RTree:
                 smaller_split_node.id = self.tree_handler.create_node(smaller_split_node)
                 bigger_split_node.id = self.tree_handler.update_node(desired_node.id, bigger_split_node)
 
+                self.update_parent_reference(smaller_split_node)
+
                 # parent_node.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
                 parent_node.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
                 self.tree_handler.update_node(parent_node.id, parent_node)
@@ -613,12 +659,17 @@ class RTree:
             smaller_split_node.id = self.tree_handler.create_node(smaller_split_node)
             bigger_split_node.id = self.tree_handler.update_node(desired_node.id, bigger_split_node)
 
-            # todo update smaller_split_node child nodes parent nodes
+            self.update_parent_reference(smaller_split_node)
 
             parent_node.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
             parent_node.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
 
             self.tree_handler.update_node(parent_node.id, parent_node)
+
+            self.propagate_mbb_increase(parent_node)
+            root_node = self.__get_node(self.root_id)
+            print("root children", root_node.child_nodes)
+            print("small", smaller_split_node.id, "bigger", bigger_split_node.id, "parent", parent_node.id)
 
     def insert_entry(self, new_entry: DatabaseEntry):
         new_entry_position = self.database.create(new_entry)
@@ -627,6 +678,7 @@ class RTree:
         if root_node is None:
             raise Exception("root node cannot be None")
 
+        print("===================================================================")
         desired_node_id = self.rec_search(new_entry.get_mbb(), root_node)
         desired_node = self.__get_node(desired_node_id)
 
@@ -680,7 +732,7 @@ class RTree:
                 self.tree_handler.update_node(parent_node.id, parent_node)
 
         else:
-            desired_node.insert_entry_from_entry(new_entry_position, new_entry)
+            desired_node.insert_box(new_entry_position, new_entry.get_mbb().box)
             self.tree_handler.update_node(desired_node_id, desired_node)
 
 
