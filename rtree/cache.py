@@ -11,6 +11,9 @@ class Cache:
         self.node_size = node_size
         self.cache_nodes = cache_nodes
 
+        # FIXME is this this list of 16 nodes f 1024 BYTES? no it is a list of 16 * 1024 nodes
+        # 4MB =  4 * 1024 nodes
+
         self.cache_size = self.cache_nodes * self.node_size
         self.memory: List[Optional[RTreeNode]] = [None] * self.cache_size
 
