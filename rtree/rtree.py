@@ -215,7 +215,7 @@ class RTree:
                 child_node = self.__get_node(child)
                 if child_node is None:
                     raise Exception("Child node cannot be None")
-                if child_node.mbb.contains_inner(coordinates):
+                if child_node.mbb.overlaps(coordinates):
                     self.__rec_search_rectangle(coordinates, child_node, carry)
 
     # area defined by two points in N dimensions

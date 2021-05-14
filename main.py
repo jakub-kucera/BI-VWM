@@ -31,46 +31,26 @@ if __name__ == '__main__':
     x, y = -1, -1
     total_insert_count = 0
     try:
-        random_y = list(range(0, 400))
-        random.shuffle(random_y)
-        random_y = random_y[0:80]
-        random_x = list(range(0, 400))
+        random_x = list(range(0, 500))
         random.shuffle(random_x)
-        random_x = random_x[0:80]
+        random_x = random_x[0:140]
         for x in random_x:
+            random_y = list(range(0, 500))
+            random.shuffle(random_y)
+            random_y = random_y[0:140]
             for y in random_y:
                 # print(f"x: {x}; y: {y}")
                 total_insert_count += 1
                 tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
 
-        # tree.insert_entry(DatabaseEntry(coordinates=[1, 4], data="This is data 0"))
-        # total_insert_count += 1
-        # tree.insert_entry(DatabaseEntry(coordinates=[1, 1], data="This is data 1"))
-        # total_insert_count += 1
-        # tree.insert_entry(DatabaseEntry(coordinates=[-1, -1], data="This is data 2"))
-        # total_insert_count += 1
+        print("\n==========================")
+        for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[20, 20]):
+            print(found_node)
+        print("\n==========================")
+        for found_node in tree.search_k_nearest_neighbours(4, coordinates=[0, 4]):
+            print(found_node)
 
-        tree.insert_entry(DatabaseEntry(coordinates=[-5, -5], data="This is data -5, -5"))
-        total_insert_count += 1
-
-        # for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[5, 5]):
-        #     print(found_node)
-
-        # for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[5, 5]):
-        #     print(found_node)
-        #
-        # print("==========================")
-        #
-        # for found_node in tree.search_k_nearest_neighbours(4, coordinates=[0, 4]):
-        #     print(found_node)
-
-        # print(tree.search_node(coordinates=[1, 4]))
-        # print(tree.search_node(coordinates=[-5, -5]))
-        for node in tree.search_rectangle([10, 10], [20, 20]):
-            print(node)
-        for node in tree.search_k_nearest_neighbours(2, [20, 20]):
-            print(node)
-        visualize(tree, show_mbbs_only=True)  # False)
+        # visualize(tree, show_mbbs_only=False)  # False)
     except Exception as e:
         print(f"x: {x}; y: {y}")
         print(f"total_insert_count {total_insert_count}")
