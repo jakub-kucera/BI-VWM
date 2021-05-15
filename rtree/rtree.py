@@ -178,23 +178,26 @@ class RTree:
     def __del__(self):
         pass
 
-    def __rec_search_node(self, coordinates: MBB, node: RTreeNode) -> Optional[DatabaseEntry]:
+    def __rec_search_entry(self, coordinates: MBB, node: RTreeNode) -> Optional[Tuple[DatabaseEntry, int, int]]:
+        """Return entry, entry_position and id for node containing entry"""
+        if node.id is None:
+            raise Exception("node.id cannot be None")
+
         if node.is_leaf:
             for entry_position in node.child_nodes:
                 entry = self.database.search(entry_position)
                 if coordinates.contains_inner(entry.get_mbb()):
-                    return entry
+                    return entry, entry_position, node.id
         else:
             for child_id in node.child_nodes:
                 child_node = self.__get_node(child_id)
                 if child_node is None:
                     raise Exception("Child node cannot be None")
                 if child_node.mbb.contains_inner(coordinates):
-                    return self.__rec_search_node(coordinates, child_node)
+                    return self.__rec_search_entry(coordinates, child_node)
         return None
 
-    # single point in N dimensions
-    def search_node(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
+    def __search_entry_and_position(self, coordinates: List[int]) -> Optional[Tuple[DatabaseEntry, int, int]]:
         # todo visited nodes counter. Same for other searches
         check_mbb = MBB.create_box_from_entry_list(coordinates)
         root_node = self.__get_node(self.root_id)
@@ -202,7 +205,21 @@ class RTree:
             raise Exception("Root node cannot be None")
 
         # recursively check all children from root down for matching coordinates
-        return self.__rec_search_node(check_mbb, root_node)
+        return self.__rec_search_entry(check_mbb, root_node)
+
+    def search_entry(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
+        entry = self.__search_entry_and_position(coordinates)
+        if entry is None:
+            return None
+
+        return entry[0]
+
+    def search_entry_position_parent_position(self, coordinates: List[int]) -> Optional[Tuple[int, int]]:
+        entry = self.__search_entry_and_position(coordinates)
+        if entry is None:
+            return None
+
+        return entry[1], entry[2]
 
     def update_root_id(self, root_id: int):
         self.root_id = root_id
@@ -559,18 +576,31 @@ class RTree:
     def __too_many_deleted_entries(self):
         return (self.node_size ** self.depth) / 2 < self.deleted_db_entries_counter
 
-    def __delete_entry(self, entry: DatabaseEntry):
+    def delete_entry(self, coordinates: List[int]) -> bool:  # todo change to List[int]
         # if node has no child nodes after deleting also delete node
-
         if self.__too_many_deleted_entries:
             # todo shake tree
             pass
-        # todo delete (maybe before shake)
-        self.deleted_db_entries_counter += 1
 
-    def delete_entries(self, *entries: DatabaseEntry):
-        for entry in entries:
-            self.__delete_entry(entry)
+        response = self.search_entry_position_parent_position(coordinates)
+        if response is None:
+            return False
+        entry_position, node_id = response
+
+        node = self.__get_node(node_id)
+        if node is None:
+            raise Exception("Node cannot be None")
+
+        if entry_position not in node.child_nodes:
+            raise Exception("Entry position must be in its parent node")
+
+        node.child_nodes.remove(entry_position)
+        self.tree_handler.update_node(node_id, node)
+
+        self.database.mark_to_delete(byte_position=entry_position)
+
+        self.deleted_db_entries_counter += 1
+        return True
 
     def linear_search(self, parameters):
         pass

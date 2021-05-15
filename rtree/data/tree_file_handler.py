@@ -269,7 +269,7 @@ class TreeFileHandler:
     def update_tree_depth(self, tree_depth: int):
         # todo delete
         self.tree_depth = tree_depth
-        self.write_header()
+        # self.write_header()
 
     def update_root_id(self, root_id: int):
         self.root_id = root_id

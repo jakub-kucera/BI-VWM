@@ -91,7 +91,7 @@ class Database:
 
         # reads the range in each dimension
         coordinates = []
-        for _ in range(self.dimensions):  # todo maybe use float by default
+        for _ in range(self.dimensions):
             dim = int.from_bytes(self.file.read(self.parameter_record_size), byteorder=DATABASE_BYTEORDER, signed=True)
             coordinates.append(dim)
 

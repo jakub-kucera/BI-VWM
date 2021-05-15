@@ -157,7 +157,7 @@ class CLI:
                 except TypeError:
                     print("Try again")
 
-        entry = self.tree.search_node(coord)
+        entry = self.tree.search_entry(coord)
         if entry is None:
             print("No entry found on given coordinates")
         else:

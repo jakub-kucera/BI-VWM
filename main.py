@@ -58,6 +58,7 @@ def create_new_tree(delete_after: bool = True, new_nodes_count: int = 100, low: 
         #     print(found_node)
 
         visualize(tree, show_mbbs_only=False)  # False)
+
     except Exception as e:
         print(f"x: {x}; y: {y}")
         print(f"total_insert_count {total_insert_count}")
@@ -84,8 +85,8 @@ def load_tree(delete_after: bool = True):
 
 if __name__ == '__main__':
     create_new_tree(delete_after=False, low=100, high=200)
-    load_tree(delete_after=False)
-    create_new_tree(delete_after=False, low=0, high=100)
+    # load_tree(delete_after=False)
+    # create_new_tree(delete_after=False, low=0, high=100)
     load_tree(delete_after=True)
 
 """

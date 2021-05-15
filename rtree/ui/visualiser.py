@@ -9,7 +9,7 @@ from rtree.rtree import RTree
 VISUALIZER_MBB_COLOR = {0: 'r', 1: 'b', 2: 'g', 3: 'c', 4: 'm', 5: 'y'}
 
 
-def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only=True):
+def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only=True, open_img: bool = False):
     """Creates and image which visualizes the rtree nodes and database entries."""
 
     # check if r-tree can be visualized
@@ -59,10 +59,16 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only
             plt.plot(coordinates[0], coordinates[1], 'bo')
     else:
         plt.plot()
+
     # plt.axis('off')
     # plt.gca().set_position([0, 0, 1, 1])
-    # plt.savefig(output_img)
-    plt.show()
+
+    if open_img:
+        plt.savefig(output_img)
+        img = Image.open(output_img)
+        img.show()
+    else:
+        plt.show()
 
     # opens the image. (Doesnt support SVG)
     # img = Image.open(output_img)
