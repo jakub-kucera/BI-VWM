@@ -208,6 +208,9 @@ class RTree:
         return self.__rec_search_entry(check_mbb, root_node)
 
     def search_entry(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
+        if len(coordinates) != self.dimensions:
+            raise Exception("coordinates have incorren number of dimensions")
+
         entry = self.__search_entry_and_position(coordinates)
         if entry is None:
             return None
@@ -241,6 +244,9 @@ class RTree:
 
     # area defined by two points in N dimensions
     def search_rectangle(self, coordinates_min: List[int], coordinates_max: List[int]) -> List[DatabaseEntry]:
+        if len(coordinates_min) != len(coordinates_max) != self.dimensions:
+            raise Exception("coordinates have incorrect number of dimensions")
+
         check_mbb = MBB.create_box_from_entry_list(coordinates_min)
         max_mbb = MBB.create_box_from_entry_list(coordinates_max)
         check_mbb.insert_mbb(max_mbb.box)
@@ -263,6 +269,9 @@ class RTree:
         #   sort all closely surrounding DatabaseEntries to select the rest to k
         #
         # math.ceil([absolutní velikost jedné dimenze] * 0.01)
+
+        if len(coordinates) != self.dimensions:
+            raise Exception("coordinates have incorrect number of dimensions")
 
         root_node = self.__get_node(self.root_id)
         if root_node is None:

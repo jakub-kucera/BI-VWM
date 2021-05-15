@@ -216,9 +216,6 @@ class TreeFileHandler:
         self.nodes_read_count += 1
         return self.__get_node_object(None)
 
-    def write_node_on_position(self):
-        pass
-
     def insert_node(self, node: RTreeNode):
         """Writes node on the current position of the file head."""
         flag = int(node.is_leaf)
