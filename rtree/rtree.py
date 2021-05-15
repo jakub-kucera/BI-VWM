@@ -204,6 +204,10 @@ class RTree:
         # recursively check all children from root down for matching coordinates
         return self.__rec_search_node(check_mbb, root_node)
 
+    def update_root_id(self, root_id: int):
+        self.root_id = root_id
+        self.tree_handler.update_root_id(root_id)
+
     def __rec_search_rectangle(self, coordinates: MBB, node: RTreeNode, carry: List[DatabaseEntry]):
         if node.is_leaf:
             for entry_position in node.child_nodes:
@@ -446,7 +450,8 @@ class RTree:
                 new_root.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
 
                 new_root_id = self.tree_handler.create_node(new_root)
-                self.root_id = new_root_id
+                # self.root_id = new_root_id
+                self.update_root_id(new_root_id)
                 new_root.parent_id = self.root_id
                 self.tree_handler.update_node(self.root_id, new_root)
 

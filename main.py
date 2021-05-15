@@ -23,7 +23,7 @@ def delete_saved_rtree():
 # rtree 1102B
 # database 81B
 
-def create_new_tree(delete_after: bool = True):
+def create_new_tree(delete_after: bool = True, new_nodes_count: int = 100, low: int = 0, high: int = 100):
     print("hello, friend")
     # print(cpu_count())
     tree = RTree()
@@ -42,20 +42,20 @@ def create_new_tree(delete_after: bool = True):
         #         # print(f"x: {x}; y: {y}")
         #         total_insert_count += 1
         #         tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
-
-        for _ in range(0, 100):
-            x = random.randint(100, 200)
-            y = random.randint(100, 200)
+        #
+        for _ in range(0, new_nodes_count):
+            x = random.randint(low, high)
+            y = random.randint(low, high)
 
             total_insert_count += 1
             tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
 
-        print("\n==========================")
-        for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[20, 20]):
-            print(found_node)
-        print("\n==========================")
-        for found_node in tree.search_k_nearest_neighbours(4, coordinates=[0, 4]):
-            print(found_node)
+        # print("\n==========================")
+        # for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[20, 20]):
+        #     print(found_node)
+        # print("\n==========================")
+        # for found_node in tree.search_k_nearest_neighbours(4, coordinates=[0, 4]):
+        #     print(found_node)
 
         visualize(tree, show_mbbs_only=False)  # False)
     except Exception as e:
@@ -83,8 +83,10 @@ def load_tree(delete_after: bool = True):
 
 
 if __name__ == '__main__':
-    create_new_tree(delete_after=True)
-    # load_tree(delete_after = False)
+    create_new_tree(delete_after=False, low=100, high=200)
+    load_tree(delete_after=False)
+    create_new_tree(delete_after=False, low=0, high=100)
+    load_tree(delete_after=True)
 
 """
 Non-leaf node:

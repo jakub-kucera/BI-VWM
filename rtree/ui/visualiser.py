@@ -8,6 +8,7 @@ from rtree.rtree import RTree
 
 VISUALIZER_MBB_COLOR = {0: 'r', 1: 'b', 2: 'g', 3: 'c', 4: 'm', 5: 'y'}
 
+
 def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only=True):
     """Creates and image which visualizes the rtree nodes and database entries."""
 
