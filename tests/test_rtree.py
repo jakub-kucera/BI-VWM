@@ -15,6 +15,10 @@ from rtree.default_config import *
     {"id_size": 10000000000},
     {"node_size": -5},
     {"node_size": 10000000000},
+    {
+        "node_size": 128,
+        "parameters_size": 100
+    },
 ])
 @pytest.mark.filterwarnings("ignore:")
 def test_tree_create_invalid(rtree_args):
@@ -46,8 +50,11 @@ def test_tree_create_invalid(rtree_args):
     {"override_file": False},
     {"dimensions": 5},
     {"parameters_size": 5},
-    {"parameters_size": 100},
     {"id_size": 10},
+    {
+        "node_size": 1024,
+        "parameters_size": 100
+    },
     {
         "override_file": False,
         "dimensions": 5,
@@ -76,7 +83,10 @@ def test_tree_create(rtree_args):
     # {"override_file": False},
     {"dimensions": 5},
     {"parameters_size": 5},
-    {"parameters_size": 100},
+    {
+        "node_size": 1024,
+        "parameters_size": 100
+    },
     {"id_size": 10},
     {
         # "override_file": False,
@@ -119,7 +129,8 @@ def test_tree_create_save_load(rtree_args):
         "parameters_size": 5,
     },
     {
-        "parameters_size": 100,
+        "node_size": 1024,
+        "parameters_size": 100
     },
     {"id_size": 10},
     {
