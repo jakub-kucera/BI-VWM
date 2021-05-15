@@ -53,6 +53,11 @@ class RTreeNode:
         # if self.is_leaf:
         #     raise Exception("Cannot insert child node into leaf node.")
 
+        if len(self.child_nodes) == 0:
+            self.child_nodes.append(new_node_id)
+            self.mbb = MBB(new_box)
+            return True
+
         if len(self.mbb.box) != len(new_box):
             raise ValueError(f"new_entry has size of {len(new_box)}, but it should be {len(self.mbb.box)}")
 
@@ -70,27 +75,6 @@ class RTreeNode:
 
     # def insert_node_from_node(self, new_node_id: int, new_node: RTreeNode) -> bool:
     #     return self.insert_box(new_node_id, new_node.mbb.box)
-
-    def insert_entry_from_entry(self, new_entry_position: int, new_entry: DatabaseEntry) -> bool:
-        if not self.is_leaf:
-            raise Exception("Cannot insert database entry into non-leaf node.")
-
-        # new_mbb = MBB.create_box_from_entry_list(entry.coordinates)
-        new_box = tuple(MBBDim(coords, coords) for coords in new_entry.coordinates)
-
-        if len(self.mbb.box) != len(new_box):
-            raise ValueError(f"new_entry has size of {len(new_box)}, but it should be {len(self.mbb.box)}")
-
-        if new_entry_position in self.child_nodes:
-            raise ValueError(f"Entry at position {new_entry_position} is already in node entries")
-
-        if len(self.child_nodes) + 1 > self.max_entries_count:
-            return False
-
-        self.child_nodes.append(new_entry_position)
-        self.mbb.insert_mbb(new_box)
-
-        return True
 
     def get_seed_split_nodes(self) -> Tuple[RTreeNode, RTreeNode]:
         new_mbb_1: List[MBBDim] = []
