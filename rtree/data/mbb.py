@@ -18,6 +18,18 @@ class MBB:
         return size
 
     @staticmethod
+    def get_metric_size(box: Tuple[MBBDim, ...]):
+        """Calculates the size of volume of MBB"""
+        # maybe use different metric
+        size = 1
+        for dim in box:
+            diff = dim.get_diff()
+            if diff != 0:
+                size *= diff
+
+        return size
+
+    @staticmethod
     def create_box_from_entry_list(coordinates: List[int]) -> MBB:
         """Creates MBB from database entry coordinates (1D list)"""
         return MBB(tuple(MBBDim(coord, coord) for coord in coordinates))
@@ -62,15 +74,12 @@ class MBB:
         self.box = new_box
         self.size = self.get_size(self.box)
 
-    def size_increase_insert(self, new_mbb: Tuple[MBBDim, ...]):
+    def size_increase_insert(self, new_box: Tuple[MBBDim, ...]):
         """Calculates size of MBB if a new entry were to be inserted"""
 
-        # todo fix for when area is 0. Maybe use length, or fake smth, or different metric
-
-        old_size = self.size
         new_mmb = MBB(self.box)
+        new_mmb.insert_mbb(new_box)
 
-        new_mmb.insert_mbb(new_mbb)
-        new_size = new_mmb.size
+        # return new_mmb.size - self.size
 
-        return new_size - old_size
+        return self.get_metric_size(new_mmb.box) - self.get_metric_size(self.box)
