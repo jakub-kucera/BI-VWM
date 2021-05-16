@@ -145,14 +145,17 @@ class Database:
 
         is_present = bool.from_bytes(self.file.read(RECORD_FLAG_SIZE), byteorder=DATABASE_BYTEORDER, signed=False)
 
-        if not is_present:  # this entry is to be deleted, not return its value
-            return None
+        # if not is_present:  # this entry is to be deleted, not return its value
+        #     return None
 
         coordinates = []
         for _ in range(self.dimensions):
             dim = int.from_bytes(self.file.read(self.parameter_record_size), byteorder=DATABASE_BYTEORDER, signed=True)
             coordinates.append(dim)
         data = pickle.load(self.file)
+
+        if not is_present:
+            return None
 
         self.file.flush()
         return DatabaseEntry(coordinates, data, is_present)
