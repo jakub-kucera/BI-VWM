@@ -137,7 +137,7 @@ class CLI:
               f"+ depth: NaN, node_size: NaN\n\n" +
               ("0> Print graph\n" if self.dimensions == 2 else "") +
               "1> Add to database\n"
-              "TODO 2> Remove from database\n"
+              "2> Remove from database\n"
               "3> Search for Point\n"
               "4> Search for points in Range\n"
               "5> Search for Nearest neighbours\n"
@@ -227,7 +227,19 @@ class CLI:
         print(f"\nEntry '{entry.data}' saved, at position {coord}")
 
     def __remove_entry(self):
-        pass
+        coord: List[int] = []
+        for n in range(self.dimensions):
+            print("Set dimension", n + 1)
+            while True:
+                try:
+                    tmp = int(get_input())
+                    coord.append(tmp)
+                    break
+                except ValueError:
+                    print("Try again")
+
+        self.tree.delete_entry(coord)
+        print(f"\nEntry at position {coord} removed from tree")
 
     def __search_point(self):
         coord: List[int] = []

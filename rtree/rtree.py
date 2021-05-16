@@ -563,10 +563,9 @@ class RTree:
         return (self.node_size ** self.depth) / 2 < self.deleted_db_entries_counter
 
     def delete_entry(self, coordinates: List[int]) -> bool:  # todo change to List[int]
-        # if node has no child nodes after deleting also delete node
         if self.__too_many_deleted_entries:
-            # todo shake tree
-            pass
+            self.deleted_db_entries_counter = 0
+            self.rebuild()
 
         response = self.__search_entry_position_parent_position(coordinates)
         if response is None:
@@ -576,16 +575,30 @@ class RTree:
         node = self.__get_node(node_id)
         if node is None:
             raise Exception("Node cannot be None")
+        if node.parent_id is None:
+            raise Exception("Parent id cannot be None")
 
         if entry_position not in node.child_nodes:
             raise Exception("Entry position must be in its parent node")
 
-        node.child_nodes.remove(entry_position)
-        self.tree_handler.update_node(node_id, node)
-        self.cache.store(node, node.parent_id == self.root_id)
+        # if node has no child nodes after deleting also delete node
+        if len(node.child_nodes) - 1 == 0:
+            parent_node = self.__get_node(node.parent_id)
+
+            if parent_node is None:
+                raise Exception("Parent_node cannot be None")
+            if parent_node.parent_id is None:
+                raise Exception("Parent_nodes parent id cannot be None")
+
+            parent_node.child_nodes.remove(node_id)
+            self.tree_handler.update_node(node.parent_id, parent_node)
+            self.cache.store(parent_node, parent_node.parent_id == self.root_id)
+        else:
+            node.child_nodes.remove(entry_position)
+            self.tree_handler.update_node(node_id, node)
+            self.cache.store(node, node.parent_id == self.root_id)
 
         self.database.mark_to_delete(byte_position=entry_position)
-
         self.deleted_db_entries_counter += 1
         return True
 

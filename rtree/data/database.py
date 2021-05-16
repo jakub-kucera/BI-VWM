@@ -132,14 +132,8 @@ class Database:
             raise ValueError("Database error! Requesting position outside the file.")
 
         self.file.seek(byte_position, 0)
-
         self.file.write(False.to_bytes(RECORD_FLAG_SIZE, byteorder=DATABASE_BYTEORDER, signed=False))
-
         self.file.flush()
-
-    # deletes marked entries and
-    def recalculate(self):
-        pass
 
     # future linear search stuffu
 
