@@ -232,6 +232,7 @@ def test_rtree_create_entry(dimensions: int, count: int, low: int, high: int):
 
 @pytest.mark.parametrize('dimensions, count, low, high', [
     (1, 100, 0, 100),
+    (1, 100, -1000, 1000),
     (2, 50, 0, 100),
     (3, 100, 0, 100),
     (6, 100, 0, 100),
@@ -242,7 +243,7 @@ def test_rtree_create_entry(dimensions: int, count: int, low: int, high: int):
 def test_rtree_delete_entry(dimensions: int, count: int, low: int, high: int):
     # todo try with seed = 7
 
-    random.seed(1)
+    # random.seed(1)
 
     try:
         os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
@@ -292,6 +293,7 @@ def test_rtree_delete_entry(dimensions: int, count: int, low: int, high: int):
         for d in range(dimensions):
             coordinates.append(coordinates_all[d][c])
 
+        print(f"c: {c}, coordinates{coordinates}")
         assert tree.delete_entry(coordinates)
 
         deleted_entry = tree.search_entry(coordinates)
