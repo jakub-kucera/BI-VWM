@@ -181,6 +181,28 @@ class Database:
         matching: List[DatabaseEntry] = []
         try:
             entry = self.__get_next_entry()
+        except EOFError as e:
+            return matching
+
+        while True:
+            tmp = 0
+            for mbb_dim in range(self.dimensions):
+                if coordinates_min[mbb_dim] <= entry.coordinates[mbb_dim] <= coordinates_max[mbb_dim]:
+                    tmp += 1
+            if tmp == self.dimensions:
+                matching.append(entry)
+            try:
+                entry = self.__get_next_entry()
+            except EOFError as e:
+                break
+
+        return matching
+
+    def linear_search_area_old(self, coordinates_min: List[int], coordinates_max: List[int]) -> List[DatabaseEntry]:
+        self.__point_at_first()
+        matching: List[DatabaseEntry] = []
+        try:
+            entry = self.__get_next_entry()
             if entry is None:
                 return matching
             while True:
@@ -198,6 +220,33 @@ class Database:
         return matching
 
     def linear_search_knn(self, k: int, coordinates: List[int]) -> List[DatabaseEntry]:
+        self.__point_at_first()
+        entry_list: List[DatabaseEntry] = []
+
+        while True:
+
+            entry = None
+            try:
+                entry = self.__get_next_entry()
+            except EOFError:
+                # print("probably reached EOF, all entries were compared")
+                break
+
+            if entry is None:
+                continue
+
+            if len(entry_list) < k:
+                entry_list.append(entry)
+                entry_list.sort(key=lambda x: x.distance_from(coordinates))
+
+            elif entry_list[-1].distance_from(coordinates) > entry.distance_from(coordinates):
+                entry_list.append(entry)
+                entry_list.sort(key=lambda x: x.distance_from(coordinates))
+                entry_list = entry_list[0:-1]
+
+        return entry_list
+
+    def linear_search_knn_old(self, k: int, coordinates: List[int]) -> List[DatabaseEntry]:
         self.__point_at_first()
         entry_list: List[DatabaseEntry] = []
 
