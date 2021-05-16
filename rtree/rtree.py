@@ -194,7 +194,9 @@ class RTree:
                 if child_node is None:
                     raise Exception("Child node cannot be None")
                 if child_node.mbb.contains_inner(coordinates):
-                    return self.__rec_search_entry(coordinates, child_node)
+                    rec_search = self.__rec_search_entry(coordinates, child_node)
+                    if rec_search is not None:
+                        return rec_search
         return None
 
     def __search_entry_and_position(self, coordinates: List[int]) -> Optional[Tuple[DatabaseEntry, int, int]]:
@@ -209,7 +211,7 @@ class RTree:
 
     def search_entry(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
         if len(coordinates) != self.dimensions:
-            raise Exception("coordinates have incorren number of dimensions")
+            raise Exception("coordinates have incorrect number of dimensions")
 
         entry = self.__search_entry_and_position(coordinates)
         if entry is None:
@@ -557,10 +559,14 @@ class RTree:
             raise Exception("desired_node cannot be None")
 
         if desired_node.is_full():
-
+            # print("Desired node is full")
             self.handle_full_node(desired_node, new_entry_position, new_entry.get_mbb().box)
-            root_node = self.__get_node(self.root_id)
+            # root_node = self.__get_node(self.root_id)
             # print("root children", root_node.child_nodes)
+            # desired_node = self.__get_node(desired_node_id)
+            # if desired_node is None:
+            #     raise Exception("desired_node cannot be None")
+
             self.propagate_stretch(desired_node)
 
         else:
@@ -571,10 +577,20 @@ class RTree:
 
     def propagate_stretch(self, node: RTreeNode):
         # print("propagate")
+        if node.parent_id is None:
+            raise Exception("parent ID cannot be none")
+
         parent_node = self.__get_node(node.parent_id)
+        if parent_node is None or parent_node.id is None:
+            raise Exception("Parent_node cannot be none")
+
         # print("maybe stretch", parent_node.id, "until", parent_node.mbb, node.mbb, "    root node being", self.root_id, " with ", parent_node.child_nodes)
         if not parent_node.contains_inner(node):
             # print("do stretch")
+
+            if len(parent_node.child_nodes) == 0:
+                raise Exception("Parent_node cannot have 0 children")
+
             contained_id = parent_node.child_nodes[0]
             parent_node.insert_box(contained_id, node.mbb.box)
             # print(f"propagate {node.id} into parent {parent_node.id}")
