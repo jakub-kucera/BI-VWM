@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Tuple
 
 from PIL import Image
 from matplotlib import pyplot as plt, patches
@@ -9,7 +9,8 @@ from rtree.rtree import RTree
 VISUALIZER_MBB_COLOR = {0: 'r', 1: 'b', 2: 'g', 3: 'c', 4: 'm', 5: 'y'}
 
 
-def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only=True, open_img: bool = False):
+def visualize(r_tree: RTree, output_img: str = "testing_img.png",
+              show_mbbs_only=True, save_img: bool = False, show_img: bool = False):
     """Creates and image which visualizes the rtree nodes and database entries."""
 
     # check if r-tree can be visualized
@@ -24,17 +25,17 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only
     fig, ax = plt.subplots()
     # ax.plot([0, 0], [0, 0])
 
-    database_entries_addresses: List[int] = []
+    database_entries_addresses: List[Tuple[int, int]] = []
     # gets all the rtree nodes
     nodes = r_tree.get_all_nodes()
-    print(f"Visualiser number of nodes: {len(nodes)}")
+    # print(f"Visualiser number of nodes: {len(nodes)}")
 
     for node, depth in nodes:
         box = node.mbb.box
 
         if node.is_leaf:
             # gets ids of database entries
-            database_entries_addresses.extend(node.child_nodes)
+            database_entries_addresses.extend(tuple([(child_node, node.id) for child_node in node.child_nodes]))
         # else:
         # Create a Rectangle and add it to plot
         node_rect = patches.Rectangle((box[0].low, box[1].low), box[0].high - box[0].low,
@@ -45,7 +46,7 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only
         ax.add_patch(node_rect)
 
     if not show_mbbs_only:
-        for db_entry_address in database_entries_addresses:
+        for db_entry_address, parent_node_id in database_entries_addresses:
             entry = r_tree.database.search(db_entry_address)
             if entry is None:
                 raise ValueError(f"Database entry not found. Entry address = {db_entry_address}")
@@ -57,18 +58,22 @@ def visualize(r_tree: RTree, output_img: str = "testing_img.png", show_mbbs_only
                 but rtree has dimension of {r_tree.dimensions}")
 
             plt.plot(coordinates[0], coordinates[1], 'bo')
+            plt.text(coordinates[0], coordinates[1], parent_node_id)
     else:
         plt.plot()
 
     # plt.axis('off')
     # plt.gca().set_position([0, 0, 1, 1])
 
-    if open_img:
+    if save_img:
         plt.savefig(output_img)
         img = Image.open(output_img)
-        img.show()
+        if show_img:
+            img.show()
     else:
         plt.show()
+
+    plt.close()
 
     # opens the image. (Doesnt support SVG)
     # img = Image.open(output_img)
