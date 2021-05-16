@@ -22,6 +22,7 @@ def create_new_tree(delete_after: bool = True, new_nodes_count: int = 100, low: 
     print("hello, friend")
     # print(cpu_count())
     tree = RTree()
+    # tree = RTree(tree_file="bigtree.bin", database_file="bigdatabase.bin")
 
     x, y = -1, -1
     total_insert_count = 0
@@ -101,8 +102,8 @@ def load_tree(delete_after: bool = True):
 
 if __name__ == '__main__':
     # delete_saved_rtree()
-    # create_new_tree(delete_after=False, low=100, high=200)
-    load_tree(delete_after=False)
+    create_new_tree(delete_after=False, new_nodes_count=1000000, low=-100000, high=200000)
+    # load_tree(delete_after=False)
 
 """
 Non-leaf node:

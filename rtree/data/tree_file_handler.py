@@ -267,6 +267,9 @@ class TreeFileHandler:
         self.file.flush()
         return node_id
 
+    def update_depth(self, depth: int):
+        self.tree_depth = depth
+
     def update_root_id(self, root_id: int):
         self.root_id = root_id
         # write_header()

@@ -122,7 +122,7 @@ class RTree:
         # id of root node
         self.root_id = 0
 
-        self.depth = 0  # todo delete
+        # self.tree_depth = 0  # todo delete
 
         self.deleted_db_entries_counter = 0
 
@@ -133,16 +133,12 @@ class RTree:
         self.config_hash = self.calculate_config_hash(
             [self.dimensions, self.node_size, self.id_size, self.parameters_size])
 
-        # Number of threads that can be used # todo delete?
-        self.max_threads = cpu_count() if max_threads is None else max_threads
-
         # object that directly interacts with a file where the rtree is stored
         self.tree_handler = TreeFileHandler(filename=self.tree_filename, dimensions=self.dimensions,
-                                            node_size=self.node_size, id_size=self.id_size, tree_depth=self.depth,
+                                            node_size=self.node_size, id_size=self.id_size, tree_depth=0,
                                             parameters_size=self.parameters_size, root_id=self.root_id,
                                             unique_sequence=self.unique_sequence, config_hash=self.config_hash)
 
-        # todo delete, only use from RTreeNode
         self.children_per_node = self.tree_handler.children_per_node
 
         if load_from_files:
@@ -155,7 +151,7 @@ class RTree:
             self.dimensions = self.tree_handler.dimensions
             self.id_size = self.tree_handler.id_size
             self.root_id = self.tree_handler.root_id
-            self.tree_depth = self.tree_handler.tree_depth
+            # self.tree_depth = self.tree_handler.tree_depth
             self.parameters_size = self.tree_handler.parameters_size
         else:
             root_node_new = RTreeNode.create_empty_node(self.dimensions, is_leaf=True, parent_id=0)
@@ -216,7 +212,6 @@ class RTree:
         return None
 
     def __search_entry_and_position(self, coordinates: List[int]) -> Optional[Tuple[DatabaseEntry, int, int]]:
-        # todo visited nodes counter. Same for other searches
         check_mbb = MBB.create_box_from_entry_list(coordinates)
         root_node = self.__get_node_fastread(self.root_id, permanent_cache=True)
         if root_node is None:
@@ -474,6 +469,8 @@ class RTree:
                 new_root.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
                 new_root.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
 
+                self.tree_handler.tree_depth += 1
+
                 new_root_id = self.tree_handler.create_node(new_root)
                 self.__update_root_id(new_root_id)
                 new_root.parent_id = self.root_id
@@ -559,11 +556,17 @@ class RTree:
             self.cache.store(desired_node, desired_node.parent_id == self.root_id)
             self.__propagate_stretch(desired_node)
 
-    def __too_many_deleted_entries(self):
-        return (self.node_size ** self.depth) / 2 < self.deleted_db_entries_counter
+    def __too_many_deleted_entries(self) -> bool:
+        depth = self.tree_handler.tree_depth
+        if depth == 0:
+            return False
 
-    def delete_entry(self, coordinates: List[int]) -> bool:  # todo change to List[int]
-        if self.__too_many_deleted_entries:
+        return (self.node_size ** self.tree_handler.tree_depth) / 2 < self.deleted_db_entries_counter
+
+    def delete_entry(self, coordinates: List[int]) -> bool:
+        if self.__too_many_deleted_entries():
+            print(
+                "================================================REBUILD================================================")
             self.deleted_db_entries_counter = 0
             self.rebuild()
 
@@ -627,9 +630,8 @@ class RTree:
         os.remove(self.tree_filename)
 
         self.root_id = 0
-        self.tree_depth = 0
         self.tree_handler = TreeFileHandler(filename=self.tree_filename, dimensions=self.dimensions,
-                                            node_size=self.node_size, id_size=self.id_size, tree_depth=self.depth,
+                                            node_size=self.node_size, id_size=self.id_size, tree_depth=0,
                                             parameters_size=self.parameters_size, root_id=self.root_id,
                                             unique_sequence=self.unique_sequence, config_hash=self.config_hash)
         root_node_new = RTreeNode.create_empty_node(self.dimensions, is_leaf=True, parent_id=0)
