@@ -85,58 +85,9 @@ def load_tree(delete_after: bool = True):
         delete_saved_rtree()
 
 
-def test_rtree_create_entry(dimensions: int, count: int, low: int, high: int):
-    try:
-        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
-        os.remove(TESTING_DIRECTORY + DATABASE_FILE_TEST)
-    except FileNotFoundError:
-        pass
-
-    tree = RTree(working_directory=TESTING_DIRECTORY,
-                 tree_file=TREE_FILE_TEST,
-                 database_file=DATABASE_FILE_TEST,
-                 dimensions=dimensions)
-    total_insert_count = 0
-
-    random.seed(2)
-
-    coordinates_all = []
-    for _ in range(dimensions):
-        coords_dim = list(range(low, high))
-        random.shuffle(coords_dim)
-        coordinates_all.append(coords_dim[0:count])
-
-    for c in range(0, count):
-        # coordinates = [random.randint(low, high) for _ in range(0, dimensions)]
-        coordinates = []
-        for d in range(dimensions):
-            coordinates.append(coordinates_all[d][c])
-
-        total_insert_count += 1
-        data = f"c: {c} coords: {coordinates}"
-        tree.insert_entry(DatabaseEntry(coordinates=coordinates, data=data))
-
-        found_entry = tree.search_entry(coordinates)
-
-        if found_entry is None:
-            print(f"missing {c} coordinates {coordinates} data {data}")
-            # visualize(tree, show_mbbs_only=False, open_img=True)
-        # assert found_entry is not None
-        # assert found_entry.data == data
-        # assert found_entry.coordinates == coordinates
-        # assert found_entry.is_present is True
-
-    del tree
-    os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
-    os.remove(TESTING_DIRECTORY + DATABASE_FILE_TEST)
-
-
 if __name__ == '__main__':
-    # create_new_tree(delete_after=False, low=100, high=200)
-    # load_tree(delete_after=False)
-    # create_new_tree(delete_after=False, low=0, high=100)
-    load_tree(delete_after=False)
-    # test_rtree_create_entry(2, 100, 0, 100)
+    create_new_tree(delete_after=False, low=100, high=200)
+    load_tree(delete_after=True)
 
 """
 Non-leaf node:

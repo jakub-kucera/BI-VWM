@@ -1,5 +1,6 @@
 import errno
 import secrets
+import sys
 from typing import List, Optional, Tuple
 import os
 import math
@@ -189,7 +190,9 @@ class RTree:
                 if child_node is None:
                     raise Exception("Child node cannot be None")
                 if child_node.mbb.contains_inner(coordinates):
-                    return self.__rec_search_entry(coordinates, child_node, permanent_cache=False)
+                    rec_search = self.__rec_search_entry(coordinates, child_node, permanent_cache=False)
+                    if rec_search is not None:
+                        return rec_search
         return None
 
     def __search_entry_and_position(self, coordinates: List[int]) -> Optional[Tuple[DatabaseEntry, int, int]]:
@@ -304,7 +307,7 @@ class RTree:
             raise Exception(f"Node {node_id} not found in tree file")
         return node
 
-    # gets node directly from file, based on id
+    # gets node from cached memory
     def __get_node_fastread(self, node_id: int, permanent_cache: bool = False) -> Optional[RTreeNode]:
         cached_node = self.cache.search(node_id, permanent_cache)
         if cached_node is not None:
@@ -534,8 +537,19 @@ class RTree:
             self.propagate_stretch(desired_node)
 
     def propagate_stretch(self, node: RTreeNode):
+        # print("propagate")
+        if node.parent_id is None:
+            raise Exception("parent ID cannot be none")
+
         parent_node = self.__get_node(node.parent_id)
+        if parent_node is None or parent_node.id is None:
+            raise Exception("Parent_node cannot be none")
+
         if not parent_node.contains_inner(node):
+
+            if len(parent_node.child_nodes) == 0:
+                raise Exception("Parent_node cannot have 0 children")
+
             contained_id = parent_node.child_nodes[0]
             parent_node.insert_box(contained_id, node.mbb.box)
             self.tree_handler.update_node(parent_node.id, parent_node)

@@ -1,9 +1,11 @@
 import os
+import random
 import secrets
-from typing import Tuple
+from typing import Tuple, List
 
 import pytest
 
+from rtree.data.database_entry import DatabaseEntry
 from rtree.data.rtree_node import RTreeNode, MBB, MBBDim
 from rtree.data.tree_file_handler import TreeFileHandler
 from rtree.default_config import *
@@ -44,7 +46,7 @@ def compare_tree_file_handler_dictionary(a_dict, b_dict):
     {"node_size": 10000000000},
     {"tree_depth": -5},
     {"tree_depth": 10000000000},
-    {"root_id": -5},
+    {"root_id": -5000000000000000000000},
     {"root_id": 100000000000000000000},
     {"unique_sequence": -5},
     {"unique_sequence": 10000},
@@ -289,3 +291,149 @@ def test_write_update_nodes_swap(tree_file_handler_args, written_nodes):
 
     if os.path.isfile(TESTING_DIRECTORY + TREE_FILE_TEST):
         os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
+
+
+@pytest.mark.parametrize('dimensions, count, low, high, diff', [
+    (1, 100, 0, 100, 10),
+    (2, 100, 0, 100, 10),
+    (2, 100, 0, 100, 0),
+    (2, 100, 0, 100, 100),
+    (3, 100, 0, 100, 10),
+    (10, 100, 0, 100, 10),
+    (2, 300, 0, 100, 10),
+    (2, 100, -100, 500, 10),
+    (3, 1000, -1000, 5000, 10),
+])
+def test_tree_handler_create_node(dimensions: int, count: int, low: int, high: int, diff: int):
+    try:
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
+    except FileNotFoundError:
+        pass
+
+    tree_handler = TreeFileHandler(filename=TESTING_DIRECTORY + TREE_FILE_TEST,
+                                   dimensions=dimensions)
+    total_insert_count = 0
+
+    for c in range(0, count):
+        total_insert_count += 1
+
+        box = []
+        for _ in range(dimensions):
+            lower = random.randint(low, high)
+            higher = lower + random.randint(0, diff)
+            box.append(MBBDim(lower, higher))
+        print(box)
+        mbb = MBB(tuple(box))
+
+        child_nodes = [random.randint(0, 2 ** (tree_handler.id_size * 8) / 2) for _ in
+                       range(0, random.randint(0, tree_handler.children_per_node))]
+        is_leaf = bool(random.getrandbits(1))
+
+        node_id = tree_handler.create_node(RTreeNode(mbb=mbb, parent_id=c, child_nodes=child_nodes, is_leaf=is_leaf))
+        found_node = tree_handler.get_node(node_id)
+
+        if found_node is None:
+            print(f"c:{c} missing: {box}")
+            # visualize(tree, show_mbbs_only=False, open_img=True)
+        assert found_node is not None
+        assert found_node.mbb == mbb
+        assert found_node.id == node_id
+        assert found_node.child_nodes == child_nodes
+        assert found_node.parent_id == c
+        # assert found_node.is_leaf == node_id
+
+
+@pytest.mark.parametrize('dimensions, count, low, high, diff', [
+    (1, 100, 0, 100, 10),
+    (2, 10, 0, 100, 5),
+    (2, 100, 0, 100, 10),
+    (2, 100, 0, 100, 0),
+    (2, 100, 0, 100, 100),
+    (3, 100, 0, 100, 10),
+    (10, 100, 0, 100, 10),
+    (2, 300, 0, 100, 10),
+    (2, 100, -100, 500, 10),
+    (3, 1000, -1000, 5000, 1000),
+])
+def test_tree_handler_update_node(dimensions: int, count: int, low: int, high: int, diff: int):
+    try:
+        os.remove(TESTING_DIRECTORY + TREE_FILE_TEST)
+    except FileNotFoundError:
+        pass
+
+    tree_handler = TreeFileHandler(filename=TESTING_DIRECTORY + TREE_FILE_TEST,
+                                   dimensions=dimensions, )
+    total_insert_count = 0
+
+    for c in range(0, count):
+
+        try:
+            total_insert_count += 1
+
+            box = []
+            for _ in range(dimensions):
+                lower = random.randint(low, high)
+                higher = lower + random.randint(0, diff)
+                box.append(MBBDim(lower, higher))
+            mbb = MBB(tuple(box))
+            print(mbb)
+
+            child_nodes = [random.randint(0, 2 ** (tree_handler.id_size * 8) / 2) for _ in
+                           range(0, random.randint(0, tree_handler.children_per_node))]
+
+            is_leaf = bool(random.getrandbits(1))
+
+            node_id = tree_handler.create_node(
+                RTreeNode(mbb=mbb, parent_id=c, child_nodes=child_nodes, is_leaf=is_leaf))
+            found_node = tree_handler.get_node(node_id)
+
+            if found_node is None:
+                print(f"c:{c} missing: {box}")
+                # visualize(tree, show_mbbs_only=False, open_img=True)
+            assert found_node is not None
+            # assert found_node.mbb == mbb
+            assert found_node.id == node_id
+            assert found_node.child_nodes == child_nodes
+            assert found_node.parent_id == c
+            assert found_node.is_leaf == is_leaf
+        except Exception as e:
+            raise e
+
+        ##########################################update random node##########################################
+
+        if c < 10:
+            continue
+
+        rnd_node_id = random.randint(0, tree_handler.highest_id)
+        rnd_node = tree_handler.get_node(rnd_node_id)
+        if rnd_node is None:
+            print(f"c:{c} rand_node not found id: {rnd_node_id}")
+            raise Exception("rnd_node cannot be None")
+
+        print("rnd_node.__dict__")
+        print(rnd_node.__dict__)
+
+        new_box: List[MBBDim] = []
+        for _ in range(dimensions):
+            lower = random.randint(low, high)
+            higher = lower + random.randint(0, diff)
+            new_box.append(MBBDim(lower, higher))
+        print(new_box)
+        rnd_node.mbb = MBB(tuple(new_box))
+
+        rnd_node.child_nodes = [random.randint(0, 2 ** (tree_handler.id_size * 7)) for _ in
+                                range(0, random.randint(0, tree_handler.children_per_node))]
+        rnd_node.is_leaf = bool(random.getrandbits(1))
+        rnd_node.parent_id = random.randint(0, 1000000000)
+        updated_node_id = tree_handler.update_node(rnd_node_id, rnd_node)
+        updated_rnd_node = tree_handler.get_node(updated_node_id)
+
+        if updated_rnd_node is None:
+            print(f"c:{c} rand_node not found id: {updated_node_id}")
+            # visualize(tree, show_mbbs_only=False, open_img=True)
+        assert updated_rnd_node is not None
+        assert updated_rnd_node.mbb.box == rnd_node.mbb.box
+        assert updated_rnd_node.id == rnd_node.id == rnd_node_id
+        assert updated_rnd_node.child_nodes == rnd_node.child_nodes
+        assert updated_rnd_node.parent_id == rnd_node.parent_id
+        assert updated_rnd_node.is_leaf == rnd_node.is_leaf

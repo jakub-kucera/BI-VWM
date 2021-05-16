@@ -54,6 +54,9 @@ class TreeFileHandler:
         else:
             self.read_header()
 
+        self.filesize = 0
+        self.__update_file_size()
+
         # calculate remaining attributes
         self.children_per_node = int(
             (self.node_size - self.node_flag_size - self.id_size - (
@@ -65,8 +68,10 @@ class TreeFileHandler:
         # sets the maximum number of entries in the Node class
         RTreeNode.max_entries_count = self.children_per_node
 
-        self.filesize = 0
-        self.__update_file_size()
+        total = self.node_flag_size + self.id_size + self.dimensions * 2 * self.parameters_size + self.children_per_node * self.id_size + self.node_padding
+
+        if total != self.node_size:
+            raise Exception(f"total({total}) != self.node_size({self.node_size})")
 
         highest_id_check = int((self.filesize - self.offset_size) / self.node_size) - 1
 
@@ -120,7 +125,7 @@ class TreeFileHandler:
             ('node_size', 4, False),
             ('highest_id', self.id_size, True),
             ('null_node_id', self.id_size, True),
-            ('root_id', self.id_size, False),
+            ('root_id', self.id_size, True),
             ('parameters_size', 1, False),
             ('tree_depth', 4, False),
         )
@@ -144,9 +149,9 @@ class TreeFileHandler:
             (self.node_size, 4, False),
             (self.highest_id, self.id_size, True),
             (self.null_node_id, self.id_size, True),
-            (self.root_id, self.id_size, False),
+            (self.root_id, self.id_size, True),
             (self.parameters_size, 1, False),
-            (self.tree_depth, 4, False)
+            (self.tree_depth, 4, False),
         )
 
         header_size = 0
@@ -159,16 +164,19 @@ class TreeFileHandler:
 
         self.file.flush()
         self.offset_size = header_size
+        if header_size != self.file.tell():
+            raise Exception(f"Headers size != position after writing header")
         return header_size
 
-    def __get_node_address(self, node_id: int):
-        self.current_position = self.offset_size + (node_id * self.node_size)
-        return self.current_position
+    def __get_node_address(self, node_id: int) -> int:
+        # self.current_position = self.offset_size + (node_id * self.node_size)
+        # return self.current_position
+        return self.offset_size + (node_id * self.node_size)
 
-    def __get_next_node_address(self) -> int:
-        old_position = self.current_position
-        self.current_position = self.current_position + self.node_size
-        return old_position
+    # def __get_next_node_address(self) -> int:
+    #     old_position = self.current_position
+    #     self.current_position = self.current_position + self.node_size
+    #     return old_position
 
     def __get_node_object(self, node_id: Optional[int]) -> RTreeNode:
 
@@ -204,20 +212,15 @@ class TreeFileHandler:
 
         self.file.seek(address, 0)
         self.nodes_read_count += 1
+
+        self.file.flush()
         return self.__get_node_object(node_id)
-
-    # probably deprecated
-    def get_next_node(self) -> Optional[RTreeNode]:
-        address = self.__get_next_node_address()
-        if self.current_position >= self.filesize:
-            return None
-
-        self.file.seek(address, 0)
-        self.nodes_read_count += 1
-        return self.__get_node_object(None)
 
     def insert_node(self, node: RTreeNode):
         """Writes node on the current position of the file head."""
+        if len(node.mbb.box) != self.dimensions:
+            raise Exception(f"Incorrect MBB dimension count")
+
         flag = int(node.is_leaf)
         self.file.write(flag.to_bytes(self.node_flag_size, byteorder=TREE_BYTEORDER, signed=False))
 
@@ -244,29 +247,25 @@ class TreeFileHandler:
         self.file.write(int(0).to_bytes(self.node_padding, byteorder=TREE_BYTEORDER, signed=False))
 
         self.file.flush()
-        # if not update_only:
-        #     self.highest_id += 1
-        # node_id = self.highest_id
+
         self.__update_file_size()
         self.current_position = self.file.tell()
 
         self.nodes_written_count += 1
-        #
-        # return node_id
 
     def create_node(self, node: RTreeNode) -> int:
         """Writes node on the current position of the file head."""
         # moves the file handle to the end of file
-        self.file.seek(0, 2)
-        self.insert_node(node)
         self.highest_id += 1
-        node_id = self.highest_id
-        return node_id
 
-    def update_tree_depth(self, tree_depth: int):
-        # todo delete
-        self.tree_depth = tree_depth
-        # self.write_header()
+        address = self.__get_node_address(self.highest_id)
+        self.file.seek(address, 0)
+
+        self.insert_node(node)
+        node_id = self.highest_id
+
+        self.file.flush()
+        return node_id
 
     def update_root_id(self, root_id: int):
         self.root_id = root_id
@@ -275,6 +274,11 @@ class TreeFileHandler:
     def update_node(self, node_id: int, node: RTreeNode):
         address = self.__get_node_address(node_id)
         self.file.seek(address, 0)
+        if address != self.file.tell():
+            raise Exception(f"Cannot move to such node")
+
         self.nodes_written_count += 1
         self.insert_node(node)
+        self.file.flush()
+
         return node_id
