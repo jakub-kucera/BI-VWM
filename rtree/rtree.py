@@ -1,6 +1,5 @@
 import errno
 import secrets
-import sys
 from typing import List, Optional, Tuple
 import os
 import math
@@ -14,7 +13,7 @@ from rtree.default_config import *
 from rtree.data.database import Database
 from rtree.data.database_entry import DatabaseEntry
 from rtree.data.rtree_node import RTreeNode
-from rtree.cache import Cache
+from rtree.data.cache import Cache
 from rtree.data.tree_file_handler import TreeFileHandler
 
 
@@ -162,10 +161,6 @@ class RTree:
             self.root_id = self.tree_handler.create_node(root_node_new)
             if self.root_id != 0:
                 raise Exception(f"Root id in new file is {self.root_id}, but should be 0")
-            # root_node_new.parent_id = self.root_id
-            # root_id_check = self.tree_handler.update_node(self.root_id, root_node_new)
-            # if root_id_check != self.root_id:
-            #     raise Exception("Incorrect root id check")
 
         # creates database file handler
         self.database = Database(filename=self.database_filename, dimensions=self.dimensions,
@@ -173,12 +168,12 @@ class RTree:
                                  unique_sequence=self.unique_sequence, config_hash=self.config_hash)
 
         # cache object (cache.py)
-        self.cache = Cache(node_size=self.children_per_node, cache_nodes=CACHE_NODES)
+        self.cache = Cache(node_size=DEFAULT_NODE_SIZE, child_size=self.tree_handler.children_per_node, cache_memory=CACHE_MEMORY_SIZE)
 
     def __del__(self):
         pass
 
-    def __rec_search_entry(self, coordinates: MBB, node: RTreeNode) -> Optional[Tuple[DatabaseEntry, int, int]]:
+    def __rec_search_entry(self, coordinates: MBB, node: RTreeNode, permanent_cache: bool = False) -> Optional[Tuple[DatabaseEntry, int, int]]:
         """Return entry, entry_position and id for node containing entry"""
         if node.id is None:
             raise Exception("node.id cannot be None")
@@ -190,26 +185,27 @@ class RTree:
                     return entry, entry_position, node.id
         else:
             for child_id in node.child_nodes:
-                child_node = self.__get_node(child_id)
+                child_node = self.__get_node_fastread(child_id, permanent_cache)
                 if child_node is None:
                     raise Exception("Child node cannot be None")
                 if child_node.mbb.contains_inner(coordinates):
-                    return self.__rec_search_entry(coordinates, child_node)
+                    return self.__rec_search_entry(coordinates, child_node, permanent_cache=False)
         return None
 
     def __search_entry_and_position(self, coordinates: List[int]) -> Optional[Tuple[DatabaseEntry, int, int]]:
         # todo visited nodes counter. Same for other searches
         check_mbb = MBB.create_box_from_entry_list(coordinates)
-        root_node = self.__get_node(self.root_id)
+        root_node = self.__get_node_fastread(self.root_id, permanent_cache=True)
         if root_node is None:
             raise Exception("Root node cannot be None")
 
         # recursively check all children from root down for matching coordinates
-        return self.__rec_search_entry(check_mbb, root_node)
+        return self.__rec_search_entry(check_mbb, root_node, permanent_cache=True)
 
+    # look for entry at specific point
     def search_entry(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
         if len(coordinates) != self.dimensions:
-            raise Exception("coordinates have incorren number of dimensions")
+            raise Exception("coordinates have incorrect number of dimensions")
 
         entry = self.__search_entry_and_position(coordinates)
         if entry is None:
@@ -228,7 +224,7 @@ class RTree:
         self.root_id = root_id
         self.tree_handler.update_root_id(root_id)
 
-    def __rec_search_rectangle(self, coordinates: MBB, node: RTreeNode, carry: List[DatabaseEntry]):
+    def __rec_search_area(self, coordinates: MBB, node: RTreeNode, carry: List[DatabaseEntry], permanent_cache: bool = False):
         if node.is_leaf:
             for entry_position in node.child_nodes:
                 entry = self.database.search(entry_position)
@@ -236,14 +232,14 @@ class RTree:
                     carry.append(entry)
         else:
             for child in node.child_nodes:
-                child_node = self.__get_node(child)
+                child_node = self.__get_node_fastread(child, permanent_cache)
                 if child_node is None:
                     raise Exception("Child node cannot be None")
                 if child_node.mbb.overlaps(coordinates):
-                    self.__rec_search_rectangle(coordinates, child_node, carry)
+                    self.__rec_search_area(coordinates, child_node, carry, permanent_cache=False)
 
     # area defined by two points in N dimensions
-    def search_rectangle(self, coordinates_min: List[int], coordinates_max: List[int]) -> List[DatabaseEntry]:
+    def search_area(self, coordinates_min: List[int], coordinates_max: List[int]) -> List[DatabaseEntry]:
         if len(coordinates_min) != len(coordinates_max) != self.dimensions:
             raise Exception("coordinates have incorrect number of dimensions")
 
@@ -251,39 +247,31 @@ class RTree:
         max_mbb = MBB.create_box_from_entry_list(coordinates_max)
         check_mbb.insert_mbb(max_mbb.box)
 
-        root_node = self.__get_node(self.root_id)
+        root_node = self.__get_node_fastread(self.root_id, permanent_cache=True)
         if root_node is None:
             raise Exception("Root node cannot be None")
 
         # recursively check all children from root down for matching coordinates
         matching: List[DatabaseEntry] = []
-        self.__rec_search_rectangle(check_mbb, root_node, matching)
+        self.__rec_search_area(check_mbb, root_node, matching, permanent_cache=True)
         return matching
 
-    def search_k_nearest_neighbours(self, k: int, coordinates: List[int]) -> List[DatabaseEntry]:
-        # if k > all DatabaseEntries: raise Exception
-        #
-        # search for matching leaf_node
-        # sort all child_nodes (DatabaseEntries) and select k of them
-        #   if more than k is available, goto parent and select closest leaf_nodes
-        #   sort all closely surrounding DatabaseEntries to select the rest to k
-        #
-        # math.ceil([absolutní velikost jedné dimenze] * 0.01)
+    # find k entries closest to given point
+    def search_knn(self, k: int, coordinates: List[int]) -> List[DatabaseEntry]:
 
         if len(coordinates) != self.dimensions:
             raise Exception("coordinates have incorrect number of dimensions")
 
-        root_node = self.__get_node(self.root_id)
+        root_node = self.__get_node_fastread(self.root_id, permanent_cache=True)
         if root_node is None:
             raise Exception("Root node cannot be None")
 
+        # at every step, increase the searchbox one percent of root area
         size_increments = []
         for dim in root_node.mbb.box:
             size_increments.append(math.ceil(dim.get_diff() * 0.01))
 
         search_mbb = MBB.create_box_from_entry_list(coordinates)
-
-        # if not root_node.contains_inner(search_box.mmb)
 
         while True:
             # increase
@@ -296,7 +284,7 @@ class RTree:
 
             # search
             nearest_neighbors: List[DatabaseEntry] = []
-            self.__rec_search_rectangle(search_mbb, root_node, nearest_neighbors)
+            self.__rec_search_area(search_mbb, root_node, nearest_neighbors, permanent_cache=True)
 
             # is it k or more?
             if len(nearest_neighbors) == k:
@@ -311,19 +299,25 @@ class RTree:
 
     # gets node directly from file, based on id
     def __get_node(self, node_id: int) -> Optional[RTreeNode]:
-        # cached_node = self.cache.search(node_id)
-        # if cached_node is not None:
-        #    return cached_node
+        node = self.tree_handler.get_node(node_id)
+        if node is None:
+            raise Exception(f"Node {node_id} not found in tree file")
+        return node
+
+    # gets node directly from file, based on id
+    def __get_node_fastread(self, node_id: int, permanent_cache: bool = False) -> Optional[RTreeNode]:
+        cached_node = self.cache.search(node_id, permanent_cache)
+        if cached_node is not None:
+           return cached_node
 
         node = self.tree_handler.get_node(node_id)
         if node is None:
             raise Exception(f"Node {node_id} not found in tree file")
-        # self.cache.store(node)
+
+        self.cache.store(node, permanent_cache)
         return node
 
     def rec_search(self, entry_mmb: MBB, node: RTreeNode) -> int:
-        # print(f"rec search node_id={node.id}, is_leaf: {node.is_leaf} with children {len(node.child_nodes)}:", node.child_nodes)
-
         if node.is_leaf:
             if node.id is None:
                 raise Exception("Node id cannot be None")
@@ -337,7 +331,6 @@ class RTree:
             if child is None:
                 raise Exception("Node cannot be None")
             if child.mbb.contains_inner(entry_mmb):
-                # print("calling mbb")
                 size = child.mbb.size
                 if size < minimum_size_value:
                     minimum_size_value = size
@@ -363,14 +356,7 @@ class RTree:
 
         return self.rec_search(entry_mmb, minimum_expansion_node)
 
-        # splitting minimum fill, (best 30-40%)
-        # prevent most inserted into only one new mbb
-
-        # return status_code, ok, dont use, full make new node
-        # if returned full, and node_id == root_id, increase tree_depth
-
     def execute_split(self, node: RTreeNode):
-        # print("execute split")
         seed_node_1, seed_node_2 = node.get_seed_split_nodes()
 
         if node is None:
@@ -403,44 +389,35 @@ class RTree:
             seed_2_increase = seed_node_2.mbb.size_increase_insert(child_mbb_box)
 
             if seed_node_1.has_over_balance():
-                # print("** insert 2")
                 seed_node_2.insert_box(child_node_id, child_mbb_box)
 
             elif seed_node_2.has_over_balance():
-                # print("* insert 1")
                 seed_node_1.insert_box(child_node_id, child_mbb_box)
 
             elif seed_1_increase > seed_2_increase:
-                # print("++ insert 2")
                 seed_node_2.insert_box(child_node_id, child_mbb_box)
 
             elif seed_2_increase > seed_1_increase:
-                # print("+ insert 1")
                 seed_node_1.insert_box(child_node_id, child_mbb_box)
 
             elif seed_node_2.mbb.size > seed_node_1.mbb.size:
-                # print("- insert 1")
                 seed_node_1.insert_box(child_node_id, child_mbb_box)
             else:
-                # print("-- insert 2")
                 seed_node_2.insert_box(child_node_id, child_mbb_box)
 
         return seed_node_1, seed_node_2
 
     def update_parent_reference(self, parent_node: RTreeNode):
-        # print("update")
-        # return
         if not parent_node.is_leaf:
             for child_id in parent_node.child_nodes:
                 child_node = self.__get_node(child_id)
                 if child_node is None:
                     raise Exception("Child Node not found")
-                # print("Updating child")
                 child_node.parent_id = parent_node.id
                 self.tree_handler.update_node(child_id, child_node)
+                self.cache.store(child_node, child_node.parent_id == self.root_id)
 
     def handle_full_node(self, desired_node: RTreeNode, new_id: int, new_box: Tuple[MBBDim, ...]):
-        # print("handle")
         desired_node.insert_box(new_id, new_box)  # insert into object, not file
         split_node_1, split_node_2 = self.execute_split(desired_node)
 
@@ -476,31 +453,21 @@ class RTree:
                 new_root.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
 
                 new_root_id = self.tree_handler.create_node(new_root)
-                # self.root_id = new_root_id
                 self.update_root_id(new_root_id)
                 new_root.parent_id = self.root_id
                 self.tree_handler.update_node(self.root_id, new_root)
+                self.cache.store(new_root, permanent=True)
 
                 smaller_split_node.parent_id = self.root_id
                 bigger_split_node.parent_id = self.root_id
                 self.tree_handler.update_node(smaller_split_node.id, smaller_split_node)
+                self.cache.store(smaller_split_node, permanent=True)
                 self.tree_handler.update_node(bigger_split_node.id, bigger_split_node)
-
-                # print(smaller_split_node.is_leaf, "is leaf : smaller split (id ", smaller_split_node.id, ")", len(smaller_split_node.child_nodes), smaller_split_node.child_nodes)
-                # print(bigger_split_node.is_leaf, "is leaf : bigger split (id ", bigger_split_node.id, ")", len(bigger_split_node.child_nodes), bigger_split_node.child_nodes)
-                # print(new_root.is_leaf, "is leaf : new_root (id ", new_root_id, ")", len(new_root.child_nodes), new_root.child_nodes)
-                # print("::::")
+                self.cache.store(bigger_split_node, permanent=True)
 
                 self.propagate_stretch(smaller_split_node)
                 self.propagate_stretch(bigger_split_node)
 
-                # smaller_split_node = self.__get_node(smaller_split_node.id)
-                # bigger_split_node = self.__get_node(bigger_split_node.id)
-                # new_root = self.__get_node(new_root_id)
-
-                # print(smaller_split_node.is_leaf, "is leaf : (parent: ", smaller_split_node.parent_id, ") smaller split", len(smaller_split_node.child_nodes), smaller_split_node.child_nodes)
-                # print(bigger_split_node.is_leaf, "is leaf : (parent: ", bigger_split_node.parent_id, ") bigger split", len(bigger_split_node.child_nodes), bigger_split_node.child_nodes)
-                # print(new_root.is_leaf, "is leaf : (parent: ", new_root.parent_id, ") new_root", len(new_root.child_nodes), new_root.child_nodes)
             else:
                 # parent node is full, but it is not a root node
                 smaller_split_node, bigger_split_node = sorted([split_node_1, split_node_2],
@@ -511,15 +478,17 @@ class RTree:
                 bigger_split_node.id = self.tree_handler.update_node(desired_node.id, bigger_split_node)
 
                 self.update_parent_reference(smaller_split_node)
+                self.cache.store(smaller_split_node, smaller_split_node.parent_id == self.root_id)
+                self.cache.store(bigger_split_node, bigger_split_node.parent_id == self.root_id)
 
                 # parent_node.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
                 parent_node.insert_box(bigger_split_node.id, bigger_split_node.mbb.box)
                 self.tree_handler.update_node(parent_node.id, parent_node)
+                self.cache.store(parent_node, parent_node.parent_id == self.root_id)
 
                 # if their parent is full, split it too -> recursively
                 self.handle_full_node(parent_node, smaller_split_node.id, smaller_split_node.mbb.box)
 
-                # raise Exception("parent node is full")
         else:  # desired is full and split, parent is not full, save splits into parent
 
             smaller_split_node, bigger_split_node = sorted([split_node_1, split_node_2],
@@ -534,16 +503,12 @@ class RTree:
             parent_node.insert_box(smaller_split_node.id, smaller_split_node.mbb.box)
 
             self.tree_handler.update_node(parent_node.id, parent_node)
-
-            root_node = self.__get_node(self.root_id)
-            # print("root children", root_node.child_nodes)
-            # print("small", smaller_split_node.id, "bigger", bigger_split_node.id, "parent", parent_node.id)
+            self.cache.store(parent_node, parent_node.parent_id == self.root_id)
 
             self.propagate_stretch(smaller_split_node)
             self.propagate_stretch(bigger_split_node)
 
     def insert_entry(self, new_entry: DatabaseEntry):
-        # print("insert =================================================================== <- ", new_entry.get_mbb())
         new_entry_position = self.database.create(new_entry)
 
         root_node = self.__get_node(self.root_id)
@@ -555,31 +520,26 @@ class RTree:
 
         if desired_node is None:
             raise Exception("desired_node cannot be None")
+        if desired_node.parent_id is None:
+            raise Exception("desired_node parent_id cannot be None")
 
         if desired_node.is_full():
-
             self.handle_full_node(desired_node, new_entry_position, new_entry.get_mbb().box)
-            root_node = self.__get_node(self.root_id)
-            # print("root children", root_node.child_nodes)
+            self.cache.store(desired_node, desired_node.parent_id == self.root_id)
             self.propagate_stretch(desired_node)
-
         else:
             desired_node.insert_box(new_entry_position, new_entry.get_mbb().box)
             self.tree_handler.update_node(desired_node_id, desired_node)
-            # print("re-desired ", desired_node_id, ":", len(desired_node.child_nodes), desired_node.child_nodes)
+            self.cache.store(desired_node, desired_node.parent_id == self.root_id)
             self.propagate_stretch(desired_node)
 
     def propagate_stretch(self, node: RTreeNode):
-        # print("propagate")
         parent_node = self.__get_node(node.parent_id)
-        # print("maybe stretch", parent_node.id, "until", parent_node.mbb, node.mbb, "    root node being", self.root_id, " with ", parent_node.child_nodes)
         if not parent_node.contains_inner(node):
-            # print("do stretch")
             contained_id = parent_node.child_nodes[0]
             parent_node.insert_box(contained_id, node.mbb.box)
-            # print(f"propagate {node.id} into parent {parent_node.id}")
             self.tree_handler.update_node(parent_node.id, parent_node)
-            # print("after stretch", parent_node.id, "until", parent_node.mbb, node.mbb)
+            self.cache.store(parent_node, parent_node.parent_id == self.root_id)
             self.propagate_stretch(parent_node)
 
     def __too_many_deleted_entries(self):
@@ -605,13 +565,20 @@ class RTree:
 
         node.child_nodes.remove(entry_position)
         self.tree_handler.update_node(node_id, node)
+        self.cache.store(node, node.parent_id == self.root_id)
 
         self.database.mark_to_delete(byte_position=entry_position)
 
         self.deleted_db_entries_counter += 1
         return True
 
-    def linear_search(self, parameters):
+    def linear_search(self):
+        pass
+
+    def linear_search_rectangle(self):
+        pass
+
+    def linear_search_knn(self):
         pass
 
     def rebuild(self):

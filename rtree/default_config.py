@@ -19,7 +19,7 @@ UNIQUE_SEQUENCE_LENGTH: Final[int] = 20
 CONFIG_HASH_LENGTH: Final[int] = 20  # length of hash from SHA1 function
 MINIMUM_NODE_FILL: Final[float] = 0.35
 
-CACHE_NODES: Final[int] = 16
+CACHE_MEMORY_SIZE: Final[int] = 8 * 1024  # 8MB for allocated cache
 
 # Testing
 TESTING_DIRECTORY: Final[str] = "tests/testing_data/"
