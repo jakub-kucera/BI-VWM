@@ -203,12 +203,8 @@ class CLI:
 
     def __graph(self):
         print("Include entries?  [1> Yes]")
-        tmp = get_input()
-        if matches(tmp, ["yes", "y", "1"]):
-            visualize(self.tree, show_mbbs_only=False, open_img=True)
-        else:
-            visualize(self.tree, show_mbbs_only=True, open_img=True)
-
+        tmp = not matches(get_input(), ["yes", "y", "1"])
+        visualize(self.tree, show_mbbs_only=tmp, save_img=True, show_img=True)
         print("File generated in './testing_img.png'")
 
     def __add_entry(self):
