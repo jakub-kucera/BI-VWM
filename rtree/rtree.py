@@ -165,7 +165,8 @@ class RTree:
                                  unique_sequence=self.unique_sequence, config_hash=self.config_hash)
 
         # cache object (cache.py)
-        self.cache = Cache(node_size=DEFAULT_NODE_SIZE, child_size=self.tree_handler.children_per_node, cache_memory=CACHE_MEMORY_SIZE)
+        self.cache = Cache(node_size=self.node_size, child_size=self.tree_handler.children_per_node,
+                           cache_memory=CACHE_MEMORY_SIZE)
 
     def __del__(self):
         pass
@@ -593,7 +594,11 @@ class RTree:
             if parent_node.parent_id is None:
                 raise Exception("Parent_nodes parent id cannot be None")
 
-            parent_node.child_nodes.remove(node_id)
+            if parent_node.is_leaf:
+                parent_node.child_nodes.remove(entry_position)
+            else:
+                parent_node.child_nodes.remove(node_id)
+
             self.tree_handler.update_node(node.parent_id, parent_node)
             self.cache.store(parent_node, parent_node.parent_id == self.root_id)
         else:
@@ -638,8 +643,8 @@ class RTree:
         self.root_id = self.tree_handler.create_node(root_node_new)
         self.__update_root_id(self.root_id)
 
-        del self.cache
-        self.cache = Cache(node_size=DEFAULT_NODE_SIZE, child_size=self.tree_handler.children_per_node, cache_memory=CACHE_MEMORY_SIZE)
+        # del self.cache
+        self.cache = Cache(node_size=self.node_size, child_size=self.children_per_node, cache_memory=CACHE_MEMORY_SIZE)
 
         for entry_position in all_positions:
             entry = self.database.search(entry_position)

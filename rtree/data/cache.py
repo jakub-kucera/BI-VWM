@@ -35,6 +35,7 @@ class Cache:
         return data % self.cache_size
 
     def search(self, node_id: int, permanent: bool = False) -> Optional[RTreeNode]:
+        return None
         cached_node: Optional[RTreeNode] = None
 
         if permanent:
@@ -50,6 +51,7 @@ class Cache:
         return cached_node if cached_node.id == node_id else None
 
     def store(self, new_node: RTreeNode, permanent: bool = False):
+        return
         if new_node is None or new_node.id is None:
             raise Exception("Cannot call cache store on Node with no ID")
 

@@ -36,7 +36,7 @@ def create_new_tree(delete_after: bool = True, new_nodes_count: int = 100, low: 
             total_insert_count += 1
             tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
 
-        visualize(tree, show_mbbs_only=False)  # False)
+        # visualize(tree, show_mbbs_only=False)  # False)
 
     except Exception as e:
         print(f"x: {x}; y: {y}")
@@ -108,11 +108,46 @@ def search_tree_area(delete_after: bool = True, attempt_count: int = 2,
         delete_saved_rtree()
 
 
+def search_tree_one_entry(delete_after: bool = True, attempt_count: int = 10,
+                          low: int = 0, high: int = 100):
+    try:
+        # tree = RTree()
+        tree = RTree(tree_file="bigtree.bin", database_file="bigdatabase.bin")
+
+        for c in range(attempt_count):
+            x_n = random.randint(low, high)
+            y_n = random.randint(low, high)
+
+            to_be_found_entry = tree.search_knn(1, [x_n, y_n])
+            if len(to_be_found_entry) != 1:
+                raise Exception(f"{len(to_be_found_entry)} != 1")
+
+            x, y = to_be_found_entry[0].coordinates
+
+            normal_start = time.time()
+            found_entry = tree.search_entry([x, y])
+            normal_end = time.time()
+
+            lin_start = time.time()
+            lin_found_entry = tree.database.linear_search_entry([x, y])
+            lin_end = time.time()
+
+            print(f"Find entry normal took: {normal_end - normal_start}, entries: {found_entry.coordinates}")
+            print(f"Find entry linear took: {lin_end - lin_start}, entries: {lin_found_entry.coordinates}")
+            print("===================================================")
+    except Exception:
+        traceback.print_exc()
+    del tree
+    if delete_after:
+        delete_saved_rtree()
+
+
 if __name__ == '__main__':
     # delete_saved_rtree()
-    create_new_tree(delete_after=False, new_nodes_count=1000000, low=-100000, high=200000)
-    # search_tree_knn(delete_after=False)
+    # create_new_tree(delete_after=False, new_nodes_count=10000, low=-10000, high=2000)
+    search_tree_knn(delete_after=False)
     # search_tree_area(delete_after=False)
+    # search_tree_one_entry(delete_after=False)
 
 """
 Non-leaf node:

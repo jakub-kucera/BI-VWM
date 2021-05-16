@@ -134,7 +134,7 @@ def test_tree_create_save_load(rtree_args):
         "parameters_size": 5,
     },
     {
-        "node_size": 1024,
+        "node_size": 1028,
         "parameters_size": 100
     },
     {"id_size": 10},
@@ -238,7 +238,6 @@ def test_rtree_create_entry(dimensions: int, count: int, low: int, high: int):
     (6, 100, 0, 100),
     (2, 300, 0, 300),
     (2, 100, -100, 500),
-    (3, 1000, -1000, 5000),
 ])
 def test_rtree_delete_entry(dimensions: int, count: int, low: int, high: int):
     # todo try with seed = 7
