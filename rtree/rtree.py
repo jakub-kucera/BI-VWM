@@ -459,6 +459,7 @@ class RTree:
                 self.update_root_id(new_root_id)
                 new_root.parent_id = self.root_id
                 self.tree_handler.update_node(self.root_id, new_root)
+                new_root.id = new_root_id
                 self.cache.store(new_root, permanent=True)
 
                 smaller_split_node.parent_id = self.root_id
@@ -511,8 +512,11 @@ class RTree:
             self.propagate_stretch(smaller_split_node)
             self.propagate_stretch(bigger_split_node)
 
-    def insert_entry(self, new_entry: DatabaseEntry):
-        new_entry_position = self.database.create(new_entry)
+    def insert_entry(self, new_entry: DatabaseEntry, given_position: int = False):
+        if given_position == -1:
+            new_entry_position = self.database.create(new_entry)
+        else:
+            new_entry_position = given_position
 
         root_node = self.__get_node(self.root_id)
         if root_node is None:
@@ -586,17 +590,25 @@ class RTree:
         self.deleted_db_entries_counter += 1
         return True
 
-    def linear_search(self):
-        pass
-
-    def linear_search_rectangle(self):
-        pass
-
-    def linear_search_knn(self):
-        pass
-
     def rebuild(self):
-        pass
+        root_node = self.__get_node_fastread(self.root_id, True)
+        if root_node is None:
+            raise Exception("Root node cannot be None")
+
+        coord_min: List[int] = []
+        coord_max: List[int] = []
+
+        for mbb_dim in root_node.mbb.box:
+            coord_min.append(mbb_dim.low)
+            coord_max.append(mbb_dim.high)
+
+        # TODO get positions
+        all_entries, all_positions = self.search_area(coordinates_min=coord_min, coordinates_max=coord_max)
+
+        # TODO remove old tree
+
+        for entry, position in all_entries, all_positions:
+            self.insert_entry(entry, position)
 
     def rec_get_all_nodes(self, node: RTreeNode, depth: int) -> List[Tuple[RTreeNode, int]]:
 

@@ -73,11 +73,25 @@ def load_tree(delete_after: bool = True):
         visualize(tree, show_mbbs_only=False)
 
         print("/")
+        print(tree.search_entry([136, 128]))
+        print("/")
         for found_node in tree.search_area([100, 140], [130, 140]):
             print(found_node)
         print("/")
         for found_node in tree.search_knn(4, coordinates=[130, 140]):
             print(found_node)
+        print("/")
+        print(tree.database.linear_search_entry([136, 128]))
+        print("/")
+        for found_node in tree.database.linear_search_area([100, 140], [130, 140]):
+            print(found_node)
+        print("/")
+        for found_node in tree.database.linear_search_knn(4, coordinates=[130, 140]):
+            print(found_node)
+        print("/")
+
+
+        # tree.rebuild()
     except Exception:
         traceback.print_exc()
     del tree
@@ -86,8 +100,8 @@ def load_tree(delete_after: bool = True):
 
 
 if __name__ == '__main__':
-    create_new_tree(delete_after=False, low=100, high=200)
-    load_tree(delete_after=True)
+    # create_new_tree(delete_after=False, low=100, high=200)
+    load_tree(delete_after=False)
 
 """
 Non-leaf node:

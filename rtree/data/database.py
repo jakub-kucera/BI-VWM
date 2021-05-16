@@ -75,11 +75,11 @@ class Database:
         self.file.flush()
         self.current_position = self.header_size
 
-        return (unique, config)
+        return unique, config
 
     def __verify_byte_position(self, byte_position: int) -> bool:
         # remove flag and dimensions from the "self.filesize", data is variable and must be handled differently
-        return (byte_position < ((self.filesize - RECORD_FLAG_SIZE) - (self.dimensions * self.parameter_record_size)))
+        return byte_position < ((self.filesize - RECORD_FLAG_SIZE) - (self.dimensions * self.parameter_record_size))
 
     def search(self, byte_position: int) -> DatabaseEntry:
         if not self.__verify_byte_position(byte_position):
@@ -128,7 +128,7 @@ class Database:
         return beginning
 
     def mark_to_delete(self, byte_position: int):
-        if (not self.__verify_byte_position(byte_position)):
+        if not self.__verify_byte_position(byte_position):
             raise ValueError("Database error! Requesting position outside the file.")
 
         self.file.seek(byte_position, 0)
@@ -143,6 +143,10 @@ class Database:
 
     # future linear search stuffu
 
+    def __point_at_first(self):
+        self.current_position = self.header_size
+        self.file.seek(self.current_position, 0)
+
     def __get_next_entry(self) -> Optional[DatabaseEntry]:
 
         is_present = bool.from_bytes(self.file.read(RECORD_FLAG_SIZE), byteorder=DATABASE_BYTEORDER, signed=False)
@@ -154,29 +158,70 @@ class Database:
         for _ in range(self.dimensions):
             dim = int.from_bytes(self.file.read(self.parameter_record_size), byteorder=DATABASE_BYTEORDER, signed=True)
             coordinates.append(dim)
-
         data = pickle.load(self.file)
 
         self.file.flush()
-
         return DatabaseEntry(coordinates, data, is_present)
 
-    def FUTURE_linear_search_for(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
-        # point at start
-        self.file.seek(self.header_size, 0)
-
+    def linear_search_entry(self, coordinates: List[int]) -> Optional[DatabaseEntry]:
+        self.__point_at_first()
         try:
-            tmp = self.__get_next_entry()
+            entry = self.__get_next_entry()
+            if entry is None:
+                self.file.flush()
+                return None
+            while entry.coordinates != coordinates:
+                print(entry, "is not it")
+                entry = self.__get_next_entry()
+                if entry is None:
+                    self.file.flush()
+                    return None
+        except:
+            print("probably reached EOF, all entries were compared")
+        # coordinates not matched
+        self.file.flush()
+        return None
 
-            while(tmp == None or tmp.coordinates != coordinates):
-                tmp = self.__get_next_entry()
-
-            # unnecessary if here?
-            if(tmp.coordinates == coordinates):
-                return tmp
-
+    def linear_search_area(self, coordinates_min: List[int], coordinates_max: List[int]) -> List[DatabaseEntry]:
+        self.__point_at_first()
+        matching: List[DatabaseEntry] = []
+        try:
+            entry = self.__get_next_entry()
+            if entry is None:
+                self.file.flush()
+                return matching
+            while True:
+                tmp = 0
+                for mbb_dim in range(self.dimensions):
+                    if coordinates_min[mbb_dim] <= entry.coordinates[mbb_dim] <= coordinates_max[mbb_dim]:
+                        tmp += 1
+                if tmp == self.dimensions:
+                    matching.append(entry)
+                entry = self.__get_next_entry()
+                if entry is None:
+                    self.file.flush()
+                    return matching
         except:
             print("probably reached EOF, all entries were compared")
 
-        # coordinates not matched
-        return None
+        self.file.flush()
+        return matching
+
+    def linear_search_knn(self, k: int, coordinates: List[int]) -> List[DatabaseEntry]:
+        self.__point_at_first()
+        entry_list: List[DatabaseEntry] = []
+
+        try:
+            while True:
+                entry = self.__get_next_entry()
+                if entry is None:
+                    break
+                entry_list.append(entry)
+        except:
+            print("probably reached EOF, all entries were compared")
+
+        if len(entry_list) <= k:
+            return entry_list
+        else:
+            entry_list.sort(key=lambda x: x[0].distance_from(coordinates))
+            return entry_list[0:k]
