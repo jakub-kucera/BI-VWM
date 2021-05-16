@@ -607,13 +607,28 @@ class RTree:
 
         all_positions: List[int] = []
         self.__rec_rebuild(root_node, all_positions, True)
-        print(f"helpa: {len(all_positions)} : {all_positions}")
 
-        # TODO remove old tree and create a new one
+        # remove old tree and build a new one
+        self.tree_handler.file.close()
+        del self.tree_handler
+        os.remove(self.tree_filename)
 
-        # for entry_position in all_positions:
-        #     entry = self.database.search(entry_position)
-        #     self.insert_entry(entry, entry_position)
+        self.root_id = 0
+        self.tree_depth = 0
+        self.tree_handler = TreeFileHandler(filename=self.tree_filename, dimensions=self.dimensions,
+                                            node_size=self.node_size, id_size=self.id_size, tree_depth=self.depth,
+                                            parameters_size=self.parameters_size, root_id=self.root_id,
+                                            unique_sequence=self.unique_sequence, config_hash=self.config_hash)
+        root_node_new = RTreeNode.create_empty_node(self.dimensions, is_leaf=True, parent_id=0)
+        self.root_id = self.tree_handler.create_node(root_node_new)
+        self.update_root_id(self.root_id)
+
+        del self.cache
+        self.cache = Cache(node_size=DEFAULT_NODE_SIZE, child_size=self.tree_handler.children_per_node, cache_memory=CACHE_MEMORY_SIZE)
+
+        for entry_position in all_positions:
+            entry = self.database.search(entry_position)
+            self.insert_entry(entry, entry_position)
 
     def rec_get_all_nodes(self, node: RTreeNode, depth: int) -> List[Tuple[RTreeNode, int]]:
 

@@ -24,6 +24,10 @@ class Cache:
     def __str__(self):
         return str(self.__dict__)
 
+    def __del__(self):
+        del self.memory_permanent
+        del self.memory_variable
+
     def __hash_per(self, data: int) -> int:
         return data % self.child_size
 

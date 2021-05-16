@@ -90,7 +90,8 @@ def load_tree(delete_after: bool = True):
             print(found_node)
         print("/")
 
-        # tree.rebuild()
+        tree.rebuild()
+        visualize(tree, show_mbbs_only=False)
     except Exception:
         traceback.print_exc()
     del tree
