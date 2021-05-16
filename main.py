@@ -1,8 +1,10 @@
 import os
 import pathlib
+import time
 import traceback
 import random
 from time import sleep
+from typing import Tuple, List
 
 from rtree.data.database_entry import DatabaseEntry
 from rtree.default_config import WORKING_DIRECTORY, TESTING_DIRECTORY, TREE_FILE_TEST, DATABASE_FILE_TEST
@@ -21,37 +23,18 @@ def delete_saved_rtree():
 def create_new_tree(delete_after: bool = True, new_nodes_count: int = 100, low: int = 0, high: int = 100):
     print("hello, friend")
     # print(cpu_count())
-    tree = RTree()
-    # tree = RTree(tree_file="bigtree.bin", database_file="bigdatabase.bin")
+    # tree = RTree()
+    tree = RTree(tree_file="bigtree.bin", database_file="bigdatabase.bin")
 
     x, y = -1, -1
     total_insert_count = 0
     try:
-        # random_x = list(range(0, 500))
-        # random.shuffle(random_x)
-        # random_x = random_x[0:6]
-        # for x in random_x:
-        #     random_y = list(range(0, 500))
-        #     random.shuffle(random_y)
-        #     random_y = random_y[0:6]
-        #     for y in random_y:
-        #         # print(f"x: {x}; y: {y}")
-        #         total_insert_count += 1
-        #         tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
-        #
         for _ in range(0, new_nodes_count):
             x = random.randint(low, high)
             y = random.randint(low, high)
 
             total_insert_count += 1
             tree.insert_entry(DatabaseEntry(coordinates=[x, y], data=f"This is generated x: {x}; y: {y}"))
-
-        # print("\n==========================")
-        # for found_node in tree.search_rectangle(coordinates_min=[0, 0], coordinates_max=[20, 20]):
-        #     print(found_node)
-        # print("\n==========================")
-        # for found_node in tree.search_k_nearest_neighbours(4, coordinates=[0, 4]):
-        #     print(found_node)
 
         visualize(tree, show_mbbs_only=False)  # False)
 
@@ -68,31 +51,56 @@ def create_new_tree(delete_after: bool = True, new_nodes_count: int = 100, low: 
         delete_saved_rtree()
 
 
-def load_tree(delete_after: bool = True):
+def search_tree_knn(delete_after: bool = True, attempt_count: int = 2,
+                    find_k_entries: int = 10, low: int = 0, high: int = 100):
+    try:
+        # tree = RTree()
+        tree = RTree(tree_file="bigtree.bin", database_file="bigdatabase.bin")
+
+        for c in range(attempt_count):
+            x = random.randint(low, high)
+            y = random.randint(low, high)
+
+            normal_start = time.time()
+            found_entries = tree.search_knn(find_k_entries, [x, y])
+            normal_end = time.time()
+            found_entries_coords = [entry.coordinates for entry in found_entries]
+
+            lin_start = time.time()
+            lin_found_entries = tree.database.linear_search_knn(find_k_entries, [x, y])
+            lin_end = time.time()
+            lin_found_entries_coords = [entry.coordinates for entry in lin_found_entries]
+
+            print(f"KNN normal took: {normal_end - normal_start}, entries: {found_entries_coords}")
+            print(f"KNN linear took: {lin_end - lin_start}, entries: {lin_found_entries_coords}")
+            print("===================================================")
+    except Exception:
+        traceback.print_exc()
+    del tree
+    if delete_after:
+        delete_saved_rtree()
+
+
+def search_tree_area(delete_after: bool = True, attempt_count: int = 2,
+                     low: List[int] = [0, 0], high: List[int] = [200, 200]):
     try:
         tree = RTree()
-        visualize(tree, show_mbbs_only=False)
+        # tree = RTree(tree_file="bigtree.bin", database_file="bigdatabase.bin")
 
-        print("/")
-        print(tree.search_entry([136, 128]))
-        print("/")
-        for found_node in tree.search_area([100, 100], [130, 120]):
-            print(found_node)
-        print("/")
-        for found_node in tree.search_knn(4, coordinates=[130, 140]):
-            print(found_node)
-        print("////////")
-        print(tree.database.linear_search_entry([136, 128]))
-        print("/")
-        for found_node in tree.database.linear_search_area([100, 100], [130, 120]):
-            print(found_node)
-        print("/")
-        for found_node in tree.database.linear_search_knn(4, coordinates=[130, 140]):
-            print(found_node)
-        print("/")
+        for c in range(attempt_count):
+            normal_start = time.time()
+            found_entries = tree.search_area(low, high)
+            normal_end = time.time()
+            found_entries_coords = [entry.coordinates for entry in found_entries]
 
-        # tree.rebuild()
-        # visualize(tree, show_mbbs_only=False)
+            lin_start = time.time()
+            lin_found_entries = tree.database.linear_search_area(low, high)
+            lin_end = time.time()
+            lin_found_entries_coords = [entry.coordinates for entry in lin_found_entries]
+
+            print(f"Area search normal took: {normal_end - normal_start}, entries: {found_entries_coords}")
+            print(f"Area search took: {lin_end - lin_start}, entries: {lin_found_entries_coords}")
+            print("===================================================")
     except Exception:
         traceback.print_exc()
     del tree
@@ -103,7 +111,8 @@ def load_tree(delete_after: bool = True):
 if __name__ == '__main__':
     # delete_saved_rtree()
     create_new_tree(delete_after=False, new_nodes_count=1000000, low=-100000, high=200000)
-    # load_tree(delete_after=False)
+    # search_tree_knn(delete_after=False)
+    # search_tree_area(delete_after=False)
 
 """
 Non-leaf node:
