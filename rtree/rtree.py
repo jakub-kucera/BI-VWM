@@ -541,7 +541,6 @@ class RTree:
             self.propagate_stretch(desired_node)
 
     def propagate_stretch(self, node: RTreeNode):
-        # print("propagate")
         if node.parent_id is None:
             raise Exception("parent ID cannot be none")
 
@@ -590,25 +589,31 @@ class RTree:
         self.deleted_db_entries_counter += 1
         return True
 
+    def __rec_rebuild(self, node: RTreeNode, carry: List[int], permanent_cache: bool = False):
+        if node.is_leaf:
+            for entry_position in node.child_nodes:
+                carry.append(entry_position)
+        else:
+            for child in node.child_nodes:
+                child_node = self.__get_node_fastread(child, permanent_cache)
+                if child_node is None:
+                    raise Exception("Child node cannot be None")
+                self.__rec_rebuild(child_node, carry, permanent_cache=False)
+
     def rebuild(self):
         root_node = self.__get_node_fastread(self.root_id, True)
         if root_node is None:
             raise Exception("Root node cannot be None")
 
-        coord_min: List[int] = []
-        coord_max: List[int] = []
+        all_positions: List[int] = []
+        self.__rec_rebuild(root_node, all_positions, True)
+        print(f"helpa: {len(all_positions)} : {all_positions}")
 
-        for mbb_dim in root_node.mbb.box:
-            coord_min.append(mbb_dim.low)
-            coord_max.append(mbb_dim.high)
+        # TODO remove old tree and create a new one
 
-        # TODO get positions
-        all_entries, all_positions = self.search_area(coordinates_min=coord_min, coordinates_max=coord_max)
-
-        # TODO remove old tree
-
-        for entry, position in all_entries, all_positions:
-            self.insert_entry(entry, position)
+        # for entry_position in all_positions:
+        #     entry = self.database.search(entry_position)
+        #     self.insert_entry(entry, entry_position)
 
     def rec_get_all_nodes(self, node: RTreeNode, depth: int) -> List[Tuple[RTreeNode, int]]:
 

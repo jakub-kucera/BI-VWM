@@ -98,7 +98,7 @@ class Database:
         try:
             data = pickle.load(self.file)
         except Exception as e:
-            print(f"Error when calling picle on position {byte_position}")
+            print(f"Error when calling pickle on position {byte_position}")
             raise e
 
         self.file.flush()
@@ -107,7 +107,7 @@ class Database:
 
     def create(self, new_record: DatabaseEntry) -> int:
         if len(new_record.coordinates) != self.dimensions:
-            raise ValueError("Data creation error! recieved incorrent dimensions.")
+            raise ValueError("Data creation error! received incorrect dimensions.")
 
         self.__update_file_size()
         beginning = self.filesize
@@ -168,18 +168,15 @@ class Database:
         try:
             entry = self.__get_next_entry()
             if entry is None:
-                self.file.flush()
                 return None
             while entry.coordinates != coordinates:
-                print(entry, "is not it")
                 entry = self.__get_next_entry()
                 if entry is None:
-                    self.file.flush()
                     return None
+            return entry
         except:
             print("probably reached EOF, all entries were compared")
         # coordinates not matched
-        self.file.flush()
         return None
 
     def linear_search_area(self, coordinates_min: List[int], coordinates_max: List[int]) -> List[DatabaseEntry]:
@@ -188,7 +185,6 @@ class Database:
         try:
             entry = self.__get_next_entry()
             if entry is None:
-                self.file.flush()
                 return matching
             while True:
                 tmp = 0
@@ -199,12 +195,9 @@ class Database:
                     matching.append(entry)
                 entry = self.__get_next_entry()
                 if entry is None:
-                    self.file.flush()
                     return matching
         except:
             print("probably reached EOF, all entries were compared")
-
-        self.file.flush()
         return matching
 
     def linear_search_knn(self, k: int, coordinates: List[int]) -> List[DatabaseEntry]:
@@ -223,5 +216,5 @@ class Database:
         if len(entry_list) <= k:
             return entry_list
         else:
-            entry_list.sort(key=lambda x: x[0].distance_from(coordinates))
+            entry_list.sort(key=lambda x: x.distance_from(coordinates))
             return entry_list[0:k]
