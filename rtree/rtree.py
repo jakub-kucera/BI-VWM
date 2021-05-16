@@ -512,7 +512,7 @@ class RTree:
             self.propagate_stretch(smaller_split_node)
             self.propagate_stretch(bigger_split_node)
 
-    def insert_entry(self, new_entry: DatabaseEntry, given_position: int = False):
+    def insert_entry(self, new_entry: DatabaseEntry, given_position: int = -1):
         if given_position == -1:
             new_entry_position = self.database.create(new_entry)
         else:
