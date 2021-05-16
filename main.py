@@ -100,8 +100,8 @@ def load_tree(delete_after: bool = True):
 
 
 if __name__ == '__main__':
-    # delete_saved_rtree()
-    # create_new_tree(delete_after=False, low=100, high=200)
+    delete_saved_rtree()
+    create_new_tree(delete_after=False, low=100, high=200)
     load_tree(delete_after=False)
 
 """

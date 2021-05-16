@@ -141,8 +141,8 @@ class CLI:
               "3> Search for Point\n"
               "4> Search for points in Range\n"
               "5> Search for Nearest neighbours\n"
-              "TODO 8> Rebuild Tree\n"
-              "TODO 9> Delete Tree and Database\n"
+              "8> Rebuild Tree\n"
+              "9> Delete Tree and Database\n"
               "?> Help\n"
               "!> Exit")
         self.__default_loop()
@@ -154,7 +154,10 @@ class CLI:
         if matches(action, ["p", "0"]):
 
             if self.dimensions == 2:
-                self.__graph()
+                print("Include entries?  [1> Yes]")
+                not_only_mbb = not matches(get_input(), ["yes", "y", "1"])
+                visualize(self.tree, show_mbbs_only=not_only_mbb, save_img=True, show_img=True)
+                print("File generated in './testing_img.png'")
             else:
                 print("Graph is only available for 2 dimensions, sorry.")
 
@@ -180,16 +183,19 @@ class CLI:
 
         elif matches(action, ["rt", "8"]):
 
-            print("Are you sure?  [1> Yes]")
+            print(f"This will delete and rebuild '{self.tree_file}'\n"
+                  "Are you sure?  [1> Yes]")
             tmp = get_input()
             if matches(tmp, ["yes", "y", "1"]):
-                self.__rebuild_tree()
+                self.tree.rebuild()
+                print("Tree has been regenerated inside new file")
             else:
                 print("Action aborted")
 
         elif matches(action, ["dtd", "9"]):
 
-            print("Are you sure?  [1> Yes]")
+            print(f"This will permanently delete '{self.db_file}' and '{self.tree_file}'\n"
+                  "Are you sure?  [1> Yes]")
             tmp = get_input()
             if matches(tmp, ["yes", "y", "1"]):
                 self.__delete_files()
@@ -200,12 +206,6 @@ class CLI:
             print("Unrecognized input, try again!")
 
         self.__default_menu()
-
-    def __graph(self):
-        print("Include entries?  [1> Yes]")
-        tmp = not matches(get_input(), ["yes", "y", "1"])
-        visualize(self.tree, show_mbbs_only=tmp, save_img=True, show_img=True)
-        print("File generated in './testing_img.png'")
 
     def __add_entry(self):
         coord: List[int] = []
@@ -303,11 +303,17 @@ class CLI:
             for entry in entries:
                 self.__print_entry(entry)
 
-    def __rebuild_tree(self):
-        pass
-
     def __delete_files(self):
-        pass
+        self.tree.database.file.close()
+        del self.tree.database
+        os.remove(self.db_file)
+
+        self.tree.tree_handler.file.close()
+        del self.tree.tree_handler
+        os.remove(self.tree_file)
+
+        print("Both files have been deleted.")
+        self.__init_setup()
 
 
 if __name__ == "__main__":
