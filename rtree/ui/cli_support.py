@@ -1,7 +1,7 @@
 
 def get_input():
     tmp = input(">> ")
-    for x in ["exit", "e", "quit", "q"]:
+    for x in ["exit", "e", "!"]:
         if x == tmp.lower():
             exit()
     for x in ["help", "h", "?"]:

@@ -71,6 +71,13 @@ def load_tree(delete_after: bool = True):
     try:
         tree = RTree()
         visualize(tree, show_mbbs_only=False)
+
+        print("/")
+        for found_node in tree.search_area([100, 140], [130, 140]):
+            print(found_node)
+        print("/")
+        for found_node in tree.search_knn(4, coordinates=[130, 140]):
+            print(found_node)
     except Exception:
         traceback.print_exc()
     del tree
@@ -126,9 +133,10 @@ def test_rtree_create_entry(dimensions: int, count: int, low: int, high: int):
 
 if __name__ == '__main__':
     # create_new_tree(delete_after=False, low=100, high=200)
-    # load_tree(delete_after=True)
-
-    test_rtree_create_entry(2, 100, 0, 100)
+    # load_tree(delete_after=False)
+    # create_new_tree(delete_after=False, low=0, high=100)
+    load_tree(delete_after=False)
+    # test_rtree_create_entry(2, 100, 0, 100)
 
 """
 Non-leaf node:
